@@ -8,6 +8,7 @@ import gzip
 import base64
 import zlib
 import manage_data
+import log
 
 threads = []
 PORT = sys.argv[1]
@@ -50,8 +51,8 @@ class Parser:
             "method": None,
             "uri": None,
             "protocol": None,
-            "Request URL": None
-        }
+            "Request URL": None,
+            "User-Agent": None}
         self.respnose = None
         self.res_headers = {
             "Date": None,
@@ -220,6 +221,7 @@ class Parser:
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              reason_phrase)  # Status line
 
+            self.res_headers['Status'] = status_code
             # if request is valid but status code != 200
             # i.e  404 Not Found, 403 Forbidden
             if status_code != 200:
@@ -307,6 +309,7 @@ class Parser:
             reason_phrase = STATUS_CODES[status_code]
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              reason_phrase)  # Status line
+            self.res_headers['Status'] = status_code
             print("in POST method: msg_body\n" + self.msg_body)
             msg_body = self.msg_body.split('&')
             print("msg_body: ", msg_body)
@@ -336,6 +339,7 @@ class Parser:
         elif method == "DELETE":
             file_path, file_extention, status_code = self.resolve_uri(URI)
             reason_phrase = STATUS_CODES[status_code]
+            self.res_headers['Status'] = status_code
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              reason_phrase)  # Status line
 
@@ -344,6 +348,8 @@ class Parser:
 
         else:
             file_path, file_extention, status_code = self.resolve_uri(URI)
+            status_code = 400
+            self.res_headers['Status'] = status_code
             reason_phrase = STATUS_CODES[status_code]
             response = "{} {} {}".format(str(http_version), 400, reason_phrase)
             self.print_res_headers(response)
@@ -383,6 +389,11 @@ class ClientThread(threading.Thread, Parser):
         # if self.res_headers['Status'] == 400: #400 Bad Request
         self.process_query()
         self.client_socket.close()
+        request_line = self.req_headers_general['method'] + " " + \
+            self.req_headers_general['uri'] + " " + \
+            self.req_headers_general['protocol']
+        log.access_log(status_code=self.res_headers["Status"], size=self.res_headers["Content-Length"], request_line=request_line,
+                       client_ip=self.ip, user_agent=self.req_headers_general['User-Agent'])
         print_linebreak()
 
     def process_query(self):
