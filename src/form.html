@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- <script type="text/javascript" src="./js.js"></script> -->
+    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"> -->
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Popper JS -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script> -->
+
+    <!-- Latest compiled JavaScript -->
+    <!-- <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script> -->
+    <style>
+        .user {
+            background-color: #ddd;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="row ">
+        <div class="border p-3 col-sm-4">
+            <form id="myForm" method="POST">
+                <label for="Name">name:</label><br>
+                <input type="text" id="Name" name="Name"><br>
+                <label for="Year">Year:</label><br>
+                <input type="text" id="Year" name="Year"><br>
+                <label for="Branch">Branch:</label><br>
+                <input type="text" id="Branch" name="Branch"><br>
+                <label for="MIS">MIS:</label><br>
+                <input type="text" id="MIS" name="MIS"><br><br>
+                <button onclick="reload()">Submit</button>
+            </form>
+        </div>
+
+        <!-- <button onclick="fun()">Click Me</button> -->
+    </div>
+
+    <!-- <div id="response1"></div> -->
+    <button onclick="fun()"> Show List</button>
+    <div id="response2"></div>
+    <script>
+        let data = null;
+        function reload() {
+            window.location.reload();
+        }
+
+        fun()
+        async function fun() {
+
+            console.log("in function")
+            await fetch(`http://localhost:91/data/data_file1.json`)
+                .then(response => response.json())
+                .then(users => {
+                    console.log("users: ", users)
+                    data = users;
+                    console.log("data: ", data)
+                    let output = '<h2>Lists of Users</h2>';
+                    output += '<tbody>';
+                    users.forEach(function (user) {
+                        output +=
+                            //  `
+                            //     <li>
+                            //         ${user.Name}
+                            //     </li>
+                            // `;
+                            `<tr>
+                            <td>${user.Name}</td>
+                            <td>${user.Year}</td>
+                            <td>${user.Branch}</td>
+                            <td>${user.MIS}</td>
+                            </tr>
+                        `;
+                    });
+                    output += '</tbody>'
+                    // console.log(output)
+                    // document.getElementById("response1").innerHTML = output;
+
+                    // let x = `<h1>Users</h1>`;
+                    // data.forEach(function (user) {
+                    //     x += `
+                    //         <div class="list-group-item ">
+                    //             <div >${user.Name} ${user.Year} ${user.Branch} ${user.MIS}</div>
+                    //         </div>
+                    //     `
+                    // });
+
+                    let x = data.map((user) => {
+                        return (
+                            `
+                            <div class="card user">
+                                <p>Name: ${user.Name} MIS: ${user.MIS}</p>
+                            </div>
+                            `
+                        )
+                    }).join("");
+
+                    document.getElementById("response2").innerHTML = x;
+                });
+            console.log("data: ", data)
+        }
+
+    </script>
+
+
+</body>
+
+
+
+
+</html>
