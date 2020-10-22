@@ -131,9 +131,8 @@ class Parser:
         return
 
     def resolve_uri(self, uri):  # returns (file_path, file_extension, status_code)
-        print("in resolve_uri():\ninitial URI: " + uri)
-        print("quries: ", self.queries)
-
+        # print("in resolve_uri():\ninitial URI: " + uri)
+        # print("quries: ", self.queries)
         method = self.req_headers_general['method']
         root = "src"
         # if request method is GET
@@ -173,17 +172,33 @@ class Parser:
                 path = "src/data/data_file1.json"
                 file_extention = "json"
                 return (path, file_extention, 200)
-            else:
-                path = os.path.join(root, uri)
-                file_extention = "json"
-                return (path, file_extention, 404)
+            # else:
+            #     path = os.path.join(root, uri)
+            #     file_extention = "json"
+            #     return (path, file_extention, 404)
+            uri = uri.strip('/')
+            try:
+                file_extention = uri.split('.')[1]
+            except:
+                file_extention = None
+            path = os.path.join(root, uri)
+            return (path, file_extention, 200)
 
         if method == "PUT":
             path = os.path.join(root, uri)
             return (path, file_extention, 200)
 
         if method == "DELETE":
-            pass
+            uri = uri.strip('/')
+            try:
+                file_extention = uri.split('.')[1]
+            except:
+                file_extention = None
+            path = os.path.join(root, uri)
+            if os.path.isfile(path):
+                return(path, file_extention, 200)
+            else:
+                return(path, file_extention, 404)
 
     def create_response(self):
         method, URI, http_version = self.req_headers_general[
@@ -306,43 +321,74 @@ class Parser:
         # method other than GET
         elif method == "POST":
             file_path, file_extention, status_code = self.resolve_uri(URI)
-            reason_phrase = STATUS_CODES[status_code]
             response = "{} {} {}\r\n".format(str(http_version), status_code,
-                                             reason_phrase)  # Status line
+                                             STATUS_CODES[status_code])  # Status line
             self.res_headers['Status'] = status_code
-            print("in POST method: msg_body\n" + self.msg_body)
-            msg_body = self.msg_body.split('&')
-            print("msg_body: ", msg_body)
-            temp_dict = dict()
-            for i in msg_body:
-                temp = i.split('=')
-                # print(temp)
-                key = temp[0]
-                value = temp[1]
-                temp_dict[key] = value
-            print(temp_dict)
-            json_obj = json.dumps(temp_dict)
-            json_obj = json.loads(json_obj)
-            # json_obj = json.loads(self.msg_body)
-            print("json_obj: ", json_obj)
-            print("json_obj type: ", type(json_obj))
 
-            add_data(json_obj)
-            for attr in self.res_headers:
-                if self.res_headers[attr]:
-                    response = response + "{}: {}\r\n".format(
-                        attr, str(self.res_headers[attr]))
-            response += "\r\n" + "<!DOCTYPE html><html><body><h1>POST Successful</h1></body></html>"
-            self.print_res_headers(response)
-            return response.encode()
+            if self.req_headers_general["Content-Type"] == "application/x-www-form-urlencoded":
+                print(
+                    "in POST method application/x-www-form-urlencoded: msg_body\n" + self.msg_body)
+
+                # msg_body = self.msg_body.split('&')
+                # print("msg_body: ", msg_body)
+                # temp_dict = dict()
+                # for i in msg_body:
+                #     temp = i.split('=')
+                #     # print(temp)
+                #     key = temp[0]
+                #     value = temp[1]
+                #     temp_dict[key] = value
+                # print(temp_dict)
+                # json_obj = json.dumps(temp_dict)
+                # json_obj = json.loads(json_obj)
+                # # json_obj = json.loads(self.msg_body)
+                # print("json_obj: ", json_obj)
+                # print("json_obj type: ", type(json_obj))
+
+                # """  Calling post_data()  to append data in data_file.json file """
+                # post_data(json_obj)
+
+                print("calling add_data()")
+                status_code = post_data(
+                    uri=file_path, msg_body=self.msg_body, file_extension=file_extention, content_type=self.req_headers_general["Content-Type"])
+                print("out of post_data()")
+                for attr in self.res_headers:
+                    if self.res_headers[attr]:
+                        response = response + "{}: {}\r\n".format(
+                            attr, str(self.res_headers[attr]))
+                response += "\r\n" + "<!DOCTYPE html><html><body><h1>POST Successful</h1></body></html>"
+                self.print_res_headers(response)
+                return response.encode()
 
         elif method == "DELETE":
             file_path, file_extention, status_code = self.resolve_uri(URI)
+            print("method : DELETE: ", file_path, file_extention, status_code)
+
+            if status_code != 200:
+                response = "{} {} {}\r\n".format(str(http_version), status_code,
+                                                 STATUS_CODES[status_code])  # Status line
+                self.res_body = STATUS_CODES[status_code]
+                response += "\r\n" + self.res_body
+                return response.encode()
+
+            print("Calling delete_data()")
+            status_code = manage_data.delete_data(
+                uri=file_path, file_extension=file_extention, queries=self.queries)
+            print("After delete_data(): status_code: ", status_code)
+
             reason_phrase = STATUS_CODES[status_code]
             self.res_headers['Status'] = status_code
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              reason_phrase)  # Status line
+            if status_code == 200:
+                self.res_body = "File Successfully Removed\n"
+            elif status_code == 400:
+                self.res_body = "Do not give query strings for DELETE request for html, jpeg, png, jpg files\n"
+            elif status_code == 500:
+                self.res_body = "Internal Server Error\n"
 
+            response += "\r\n" + self.res_body
+            print("Response : ")
             self.print_res_headers(response)
             return response.encode()
 
