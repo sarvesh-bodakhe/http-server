@@ -9,10 +9,6 @@ def display_file():
     print(data)
 
 
-def put_data(data, uri=None):
-    pass
-
-
 def delete_data(uri, file_extension=None, queries=None):
     print("In delete_data")
     print("uri: ", uri, " Query: ", queries, " extension: ", file_extension)
@@ -74,6 +70,31 @@ def delete_data(uri, file_extension=None, queries=None):
         return 404
 
 
+def put_data(uri, msg_body, file_extension, content_type):
+    print("in put_data : uri: ", uri, " msg_body: ",
+          msg_body, " file_extension: ", file_extension, " Content-type: ", content_type)
+    uri = uri.strip('/')
+
+    if os.path.exists(uri):
+        """
+            File exits. Open it and put request_body as file contents
+        """
+        print("File exits")
+        file_obj = open(uri, "w")
+        file_obj.write(msg_body)
+        file_obj.close()
+        return 200
+    else:
+        """
+            File Does not exit. Create it and put request_body as file contents
+        """
+        print("File does not exit")
+        file_obj = open(uri, "w")
+        file_obj.write(msg_body)
+        file_obj.close()
+        return 201
+
+
 def post_data(uri, msg_body, file_extension, content_type):
     print("in post_data : uri: ", uri, " msg_body: ",
           msg_body, " file_extension: ", file_extension, " Content-type: ", content_type)
@@ -116,14 +137,53 @@ def post_data(uri, msg_body, file_extension, content_type):
         json.dump(obj, fp)
         return 200
 
-    # fp = open("src/data/data_file1.json", "r")
-    # obj = json.load(fp)
-    # data['Year'] = int(data['Year'])
-    # data['MIS'] = int(data['MIS'])
-    # obj.append(data)
-    # fp = open("src/data/data_file1.json", "w")
-    # json.dump(obj, fp)
-    return
+    elif content_type.find("multipart/form-data") != -1:
+        print("content type is multipart/form-data")
+
+        """
+            Do not know why boundary calculated is short of "--"
+        """
+        try:
+            boundary = "--" + content_type.split(';')[1].split('=')[1]
+            print("Boundary calculated: ", boundary)
+        except:
+            return 400
+
+        temp_dict = dict()
+        temp_msg = msg_body.strip(boundary).split(boundary)
+        temp_msg = temp_msg[:-1]
+        # print("split by boundary :", temp_msg)
+        for line in temp_msg:
+            # print("line: ", line)
+            try:
+                temp = line.strip().split(';')[1].split('=')[1].split('\r\n')
+                # print("temp: ", temp)
+                key, value = temp[0].strip('"'), temp[1]
+                print("key:", key, "value:", value)
+                temp_dict[key] = value
+            except:
+                return 400
+            print()
+
+        print("Object to append: ", temp_dict)
+        json_obj = json.dumps(temp_dict)
+        json_obj = json.loads(json_obj)
+        json_obj['Year'] = int(json_obj['Year'])
+        json_obj['MIS'] = int(json_obj['MIS'])
+        print("json_obj: ", json_obj)
+
+        if os.path.exists(uri):
+            fp = open(uri, "r")
+            obj = json.load(fp)
+        else:
+            obj = []
+
+        obj.append(json_obj)
+        fp = open(uri, "w")
+        json.dump(obj, fp)
+        return 200
+
+    return 400
 
 
 def get_data(file_path, file_extension=None, queries=None):
