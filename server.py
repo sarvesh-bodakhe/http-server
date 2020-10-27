@@ -86,6 +86,7 @@ class Parser:
         self.headers = msg[0]
         if len(msg) >= 2:  # if len=2: request contains both headers and body
             self.msg_body = '\r\n'.join(msg[1:])
+        print("in extract_msg: len(self.msg_body):  ", len(self.msg_body))
         # print("in extract_msg: self.msg_body: ", self.msg_body)
         # if len(msg) > 2:
         # self.res_headers['Status'] = 400  # bad request
@@ -450,9 +451,9 @@ class ClientThread(threading.Thread, Parser):
     def run(self):
         # while True:
         msg = self.client_socket.recv(4096).decode()
-        print("****  request msg:  ****")
+        print("****  request msg: Start  ****")
         print(msg)
-        print("************************\n")
+        print("****   request msg: end   ****\n")
         self.extract_msg(msg)
         self.extract_headers()
         # if self.res_headers['Status'] == 400: #400 Bad Request

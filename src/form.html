@@ -67,11 +67,6 @@
                     output += '<tbody>';
                     users.forEach(function (user) {
                         output +=
-                            //  `
-                            //     <li>
-                            //         ${user.Name}
-                            //     </li>
-                            // `;
                             `<tr>
                             <td>${user.Name}</td>
                             <td>${user.Year}</td>
@@ -81,18 +76,6 @@
                         `;
                     });
                     output += '</tbody>'
-                    // console.log(output)
-                    // document.getElementById("response1").innerHTML = output;
-
-                    // let x = `<h1>Users</h1>`;
-                    // data.forEach(function (user) {
-                    //     x += `
-                    //         <div class="list-group-item ">
-                    //             <div >${user.Name} ${user.Year} ${user.Branch} ${user.MIS}</div>
-                    //         </div>
-                    //     `
-                    // });
-
                     let x = data.map((user) => {
                         return (
                             `
