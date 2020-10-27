@@ -148,7 +148,7 @@ class Parser:
         method = self.req_headers_general['method']
         root = "src"
         # if request method is GET
-        if method == "GET":
+        if method in ["GET", "HEAD"]:
 
             if uri == "/":
                 # print("Path exits")
@@ -322,6 +322,8 @@ class Parser:
                 if method == "GET":
                     if self.res_body:
                         response += "\r\n" + self.res_body + "\r\n"
+                elif method == "HEAD":
+                    response += "\r\n"
                 response = response.encode()
                 # encode whole response(headers+body) as everything is textual
                 return response

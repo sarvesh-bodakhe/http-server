@@ -26,10 +26,16 @@
 <body>
     <div class="row ">
         <div class="border p-3 col-sm-4">
-            <form method="post" action="/form2.html" enctype="multipart/form-data">
+            <form method="post" action="./data/data_file2.json" enctype="multipart/form-data">
                 <div>
                     <label for="Name">name:</label><br>
                     <input type="text" id="Name" name="Name"><br>
+                    <label for="Year">Year:</label><br>
+                    <input type="text" id="Year" name="Year"><br>
+                    <label for="Branch">Branch:</label><br>
+                    <input type="text" id="Branch" name="Branch"><br>
+                    <label for="MIS">MIS:</label><br>
+                    <input type="text" id="MIS" name="MIS"><br><br>
                     <label for="file">Choose a file</label>
                     <input type="file" id="file" name="myFile">
                 </div>
@@ -39,7 +45,6 @@
             </form>
         </div>
     </div>
-
 
     <div id="response2"></div>
     <script>

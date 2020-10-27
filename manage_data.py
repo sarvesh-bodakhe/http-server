@@ -121,11 +121,14 @@ def post_data(uri, msg_body, file_extension, content_type):
                 """  Wrong format   """
                 return 400
 
+        temp_dict['filename'] = None
+        temp_dict['fileuri'] = None
         print("temp_dict: ", temp_dict)
         json_obj = json.dumps(temp_dict)
         json_obj = json.loads(json_obj)
         json_obj['Year'] = int(json_obj['Year'])
         json_obj['MIS'] = int(json_obj['MIS'])
+
         print("json_obj: ", json_obj)
 
         if os.path.exists(uri):
@@ -140,12 +143,17 @@ def post_data(uri, msg_body, file_extension, content_type):
         return 200
 
     elif content_type.find("multipart/form-data") != -1:
+        """
+
+        """
         print("content type is multipart/form-data")
 
         """
             Do not know why boundary calculated is short of "--"
         """
         try:
+            # print("Viraj requested: ", content_type.split(';')[1])
+            # print("Vireaj reques ended")
             boundary = "--" + content_type.split(';')[1].split('=')[1]
             print("Boundary calculated: ", boundary)
         except:
@@ -156,25 +164,63 @@ def post_data(uri, msg_body, file_extension, content_type):
         print("temp_split: ")
         temp_msg = temp_msg[:-1]
         print(temp_msg)
+
         # print("split by boundary :", temp_msg)
         for line in temp_msg:
             # print("line: ", line)
+            info_dict = dict()
+            info_dict['filename'] = None
+            info_dict['Content-Type'] = None
+            temp = line.strip('\r\n')
+
+            """
+                if file is empty. error will occur here
+            """
             try:
-                temp = line.strip().split(';')[1].split('=')[
-                    1].split('\r\n\r\n')
-                # print("temp: ", temp)
-                key, value = temp[0].strip('"'), temp[1]
-                print("key:", key, "value:", value)
-                temp_dict[key] = value
+                info, value = temp.split('\r\n\r\n')
+            except:
+                continue
+            # print(temp, value)
+            info = info.split(';')
+
+            info_dict['Content-Disposition'] = info[0].split(':')[1].strip()
+            info_dict['name'] = info[1].split('=')[1].strip('"')
+            try:
+                info_dict['filename'] = info[2].split(
+                    '\r\n')[0].split('=')[1].strip('"')
+                info_dict['Content-Type'] = info[2].split(
+                    '\r\n')[1].split(':')[1].strip()
+                file_path = os.path.join(
+                    "src/data/postedFiles", info_dict['filename'])
+
+                print("file to create + uri: ", file_path)
+                file_obj = open(file_path, "w")
+                file_obj.write(value)
+                file_obj.close()
+            except:
+                print("Unable to create file")
+                pass
+
+            info_dict['value'] = value
+            print("Info_dict: ")
+            print(info_dict)
+
+            if info_dict['filename']:
+                print("File included")
+            try:
+                temp_dict[info_dict['name']] = info_dict['value']
             except:
                 return 400
             print()
 
+        temp_dict['filename'] = info_dict['filename']
+        temp_dict['fileuri'] = None
         print("Object to append: ", temp_dict)
         json_obj = json.dumps(temp_dict)
         json_obj = json.loads(json_obj)
         json_obj['Year'] = int(json_obj['Year'])
         json_obj['MIS'] = int(json_obj['MIS'])
+
         print("json_obj: ", json_obj)
 
         if os.path.exists(uri):
