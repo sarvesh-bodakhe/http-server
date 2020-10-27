@@ -96,8 +96,10 @@ def put_data(uri, msg_body, file_extension, content_type):
 
 
 def post_data(uri, msg_body, file_extension, content_type):
-    print("in post_data : uri: ", uri, " msg_body: ",
-          msg_body, " file_extension: ", file_extension, " Content-type: ", content_type)
+    print("in post_data : uri: ", uri,  " file_extension: ",
+          file_extension, " Content-type: ", content_type)
+    print("msg_body: ")
+    print(msg_body)
     uri = uri.strip('/')
     if os.path.exists(uri):
         print("File exits")
@@ -151,12 +153,15 @@ def post_data(uri, msg_body, file_extension, content_type):
 
         temp_dict = dict()
         temp_msg = msg_body.strip(boundary).split(boundary)
+        print("temp_split: ")
         temp_msg = temp_msg[:-1]
+        print(temp_msg)
         # print("split by boundary :", temp_msg)
         for line in temp_msg:
             # print("line: ", line)
             try:
-                temp = line.strip().split(';')[1].split('=')[1].split('\r\n')
+                temp = line.strip().split(';')[1].split('=')[
+                    1].split('\r\n\r\n')
                 # print("temp: ", temp)
                 key, value = temp[0].strip('"'), temp[1]
                 print("key:", key, "value:", value)
@@ -173,15 +178,22 @@ def post_data(uri, msg_body, file_extension, content_type):
         print("json_obj: ", json_obj)
 
         if os.path.exists(uri):
+            # print("File exits")
             fp = open(uri, "r")
             obj = json.load(fp)
         else:
+            # print("File does not exist")
             obj = []
 
         obj.append(json_obj)
-        fp = open(uri, "w")
-        json.dump(obj, fp)
-        return 200
+        # print("List to append: ", obj)
+        try:
+            fp = open(uri, "w")
+            json.dump(obj, fp)
+            return 200
+        except:
+            print("Unable to open file")
+            return 500
 
     return 400
 

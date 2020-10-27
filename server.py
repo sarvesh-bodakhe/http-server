@@ -77,7 +77,7 @@ class Parser:
         return msg.split('\r\n, ')
 
     def extract_msg(self, msg):
-        msg = msg.split('\r\n\r\n')
+        msg = msg.split('\r\n\r\n', 1)
         # print("in extract_msg: msg: ")
         count = 1
         # for i in msg:
@@ -85,9 +85,9 @@ class Parser:
         #     count += 1
         self.headers = msg[0]
         if len(msg) >= 2:  # if len=2: request contains both headers and body
-            self.msg_body = '\r\n'.join(msg[1:])
+            self.msg_body = msg[1]
         print("in extract_msg: len(self.msg_body):  ", len(self.msg_body))
-        # print("in extract_msg: self.msg_body: ", self.msg_body)
+        print("in extract_msg: self.msg_body: ", self.msg_body)
         # if len(msg) > 2:
         # self.res_headers['Status'] = 400  # bad request
         return
