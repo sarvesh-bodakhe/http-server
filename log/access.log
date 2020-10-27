@@ -389,3 +389,8 @@
 127.0.0.1 - - [27/Oct/2020:16:10:10 +0530] "POST /data/data_file1.json HTTP/1.1" 200 0 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
 127.0.0.1 - - [27/Oct/2020:16:10:10 +0530] "GET /favicon.ico HTTP/1.1" 200 1150 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
 127.0.0.1 - - [27/Oct/2020:16:10:18 +0530] "GET /data/data_file1.json HTTP/1.1" 200 843 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
+127.0.0.1 - - [27/Oct/2020:16:21:10 +0530] "GET / HTTP/1.1" 200 16155 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
+127.0.0.1 - - [27/Oct/2020:16:21:10 +0530] "GET /images/image_server_01.jpeg HTTP/1.1" 200 8469 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
+127.0.0.1 - - [27/Oct/2020:16:21:13 +0530] "GET / HTTP/1.1" 200 16155 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
+127.0.0.1 - - [27/Oct/2020:16:21:13 +0530] "GET /images/image_server_01.jpeg HTTP/1.1" 200 8469 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
+127.0.0.1 - - [27/Oct/2020:16:21:14 +0530] "GET /favicon.ico HTTP/1.1" 200 1150 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36"
