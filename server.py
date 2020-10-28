@@ -138,6 +138,12 @@ class Parser:
         print("Msg Body:\n")
         print(self.msg_body)
 
+    def add_res_headers(self, response):
+        for attr in self.res_headers:
+            if self.res_headers[attr]:
+                response += "{}: {}\r\n".format(attr,
+                                                str(self.res_headers[attr]))
+
     def print_res_headers(self, msg):
         print("\n************************     response headers: Start    *****************")
         print(msg)
@@ -233,10 +239,7 @@ class Parser:
         if self.res_headers['Status'] == 400:
             response = "{} {} {}\r\n".format(str(http_version), 400,
                                              STATUS_CODES[400])  # Status line
-            for attr in self.res_headers:
-                if self.res_headers[attr]:
-                    response = response + "{}: {}\r\n".format(
-                        attr, str(self.res_headers[attr]))
+            self.add_res_headers(response)
             response += "\r\n400 Bad Request\r\n"
             self.print_res_headers(response)
             return response.encode()
@@ -255,10 +258,7 @@ class Parser:
             # if request is valid but status code != 200
             # i.e  404 Not Found, 403 Forbidden
             if status_code != 200:
-                for attr in self.res_headers:
-                    if self.res_headers[attr]:
-                        response = response + "{}: {}\r\n".format(
-                            attr, str(self.res_headers[attr]))
+                self.add_res_headers(response)
                 if status_code == 404:
                     if method == "GET":
                         response += "\r\n" + "404 Page Not Found\r\n"
@@ -281,10 +281,7 @@ class Parser:
                 self.res_headers["Accept-ranges"] = "bytes"
                 self.res_headers["Content-type"] = CONTENT_TYPE[file_extention]
 
-                for attr in self.res_headers:
-                    if self.res_headers[attr]:
-                        response = response + "{}: {}\r\n".format(
-                            attr, str(self.res_headers[attr]))
+                self.add_res_headers(response)
                 response.strip()
                 response += "\r\n"
                 self.print_res_headers(response)
@@ -316,10 +313,8 @@ class Parser:
                     self.res_headers["Content-type"] = CONTENT_TYPE[file_extention]
                     self.res_headers["Content-Length"] = len(self.res_body)
 
-                for attr in self.res_headers:
-                    if self.res_headers[attr]:
-                        response = response + "{}: {}\r\n".format(
-                            attr, str(self.res_headers[attr]))
+                # print("Adding headers by add_res_headers")
+                self.add_res_headers(response)
                 self.print_res_headers(response)
                 if method == "GET":
                     if self.res_body:
@@ -355,10 +350,7 @@ class Parser:
             status_code = post_data(uri=file_path, msg_body=self.msg_body,
                                     file_extension=file_extention, content_type=self.req_headers_general["Content-Type"])
             print("out of post_data()")
-            for attr in self.res_headers:
-                if self.res_headers[attr]:
-                    response = response + "{}: {}\r\n".format(
-                        attr, str(self.res_headers[attr]))
+            self.add_res_headers(response)
             response += "\r\n" + "POST Successful"
             self.print_res_headers(response)
             return response.encode()
@@ -379,10 +371,7 @@ class Parser:
                 self.res_body = "File Created\r\n"
             self.res_headers['Status'] = status_code
             self.res_headers["Content-Length"] = len(self.res_body)
-            for attr in self.res_headers:
-                if self.res_headers[attr]:
-                    response = response + "{}: {}\r\n".format(
-                        attr, str(self.res_headers[attr]))
+            self.add_res_headers(response)
             response += "\r\n" + self.msg_body
             return response.encode()
 
@@ -395,6 +384,7 @@ class Parser:
                                                  STATUS_CODES[status_code])  # Status line
                 self.res_body = STATUS_CODES[status_code]
                 self.res_headers["Content-Length"] = len(self.msg_body)
+                self.add_res_headers(response)
                 response += "\r\n" + self.res_body
                 return response.encode()
 
@@ -415,6 +405,7 @@ class Parser:
                 self.res_body = "Internal Server Error\n"
 
             self.res_headers["Content-Length"] = len(self.msg_body)
+            self.add_res_headers(response)
             response += "\r\n" + self.res_body
             print("Response : ")
             self.print_res_headers(response)
@@ -426,6 +417,8 @@ class Parser:
             self.res_headers['Status'] = status_code
             reason_phrase = STATUS_CODES[status_code]
             response = "{} {} {}".format(str(http_version), 400, reason_phrase)
+            self.res_headers(response)
+            response += "\r\n"
             self.print_res_headers(response)
             return response.encode()
 

@@ -46,7 +46,7 @@ def delete_data(uri, file_extension=None, queries=None):
                 file_obj.close()
                 return 200
 
-        elif file_extension in ["html", "jpeg", "png", "jpg"]:
+        elif file_extension in ["html", "jpeg", "png", "jpg", "txt"]:
             if len(queries) == 0:
                 """
                     Delete file here
@@ -139,8 +139,8 @@ def post_data(uri, msg_body, file_extension, content_type):
                 """  Wrong format   """
                 return 400
 
-        temp_dict['filename'] = None
-        temp_dict['fileuri'] = None
+        # temp_dict['filename'] = None
+        # temp_dict['fileuri'] = None
         print("temp_dict: ", temp_dict)
         json_obj = json.dumps(temp_dict)
         json_obj = json.loads(json_obj)
