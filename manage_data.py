@@ -70,6 +70,24 @@ def delete_data(uri, file_extension=None, queries=None):
         return 404
 
 
+"""
+        The PUT method requests that the enclosed entity be stored under the
+        supplied Request-URI.
+                If the Request-URI refers to an already
+                existing resource, the enclosed entity SHOULD be considered as a
+                modified version of the one residing on the origin server. If the
+                Request-URI does not point to an existing resource, and that URI is
+                capable of being defined as a new resource by the requesting user
+                agent, the origin server can create the resource with that URI. If a
+                new resource is created, the origin server MUST inform the user agent
+                via the 201 (Created) response. If an existing resource is modified,
+                either the 200 (OK) or 204 (No Content) response codes SHOULD be sent
+                to indicate successful completion of the request.
+"""
+
+# Currently no check for directory
+
+
 def put_data(uri, msg_body, file_extension, content_type):
     print("in put_data : uri: ", uri, " msg_body: ",
           msg_body, " file_extension: ", file_extension, " Content-type: ", content_type)
@@ -274,4 +292,21 @@ def get_data(file_path, file_extension=None, queries=None):
         return text_data
 
 
+# def set_cookie(keys_values, msg=''):
+#     print("in set_cookie: ")
+#     print(keys_values)
+#     try:
+#         for key in keys_values:
+#             msg += 'Set-Cookie: {}={}\r\n'.format(key, keys_values[key])
+#     except:
+#         pass
+#     print(msg)
+
+
+# dict1 = {
+#     "Name": "Sarvesh",
+#     "Password": 123
+# }
+
+# set_cookie(dict1)
 # display_file()

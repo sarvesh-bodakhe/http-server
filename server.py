@@ -37,7 +37,7 @@ CONTENT_TYPE = {
 
 def print_linebreak():
     print(
-        "-------------------------------------------------------------------------------------------"
+        "\n\n-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
     )
     print()
 
@@ -48,12 +48,15 @@ class Parser:
         self.headers = None
         self.res_body = None
         self.queries = {}
+        self.cookies = None
         self.req_headers_general = {
             "method": None,
             "uri": None,
             "protocol": None,
             "Request URL": None,
-            "User-Agent": None}
+            "User-Agent": None,
+            "Cookie": None
+        }
         self.respnose = None
         self.res_headers = {
             "Date": None,
@@ -94,7 +97,6 @@ class Parser:
 
     def extract_headers(self):
         self.headers = self.headers.split('\r\n')
-
         try:
             self.req_headers_general['method'], self.req_headers_general[
                 'uri'], self.req_headers_general['protocol'] = self.headers[
@@ -137,9 +139,9 @@ class Parser:
         print(self.msg_body)
 
     def print_res_headers(self, msg):
-        print("\n****     response headers    *****")
+        print("\n************************     response headers: Start    *****************")
         print(msg)
-        print("***********************************\n")
+        print("************************     response headers: End    *****************")
         return
 
     def resolve_uri(self, uri):  # returns (file_path, file_extension, status_code)
@@ -214,14 +216,14 @@ class Parser:
                 return(path, file_extention, 404)
 
     def create_response(self):
-        method, URI, http_version = self.req_headers_general[
-            'method'], self.req_headers_general[
-                'uri'], self.req_headers_general["protocol"]
-
         # Defining response headers (which will always be sent)
         self.res_headers["Date"] = strftime("%a, %d %b %Y %H:%M:%S GMT",
                                             gmtime())
         self.res_headers["Server"] = "localhost"
+
+        method, URI, http_version = self.req_headers_general[
+            'method'], self.req_headers_general[
+                'uri'], self.req_headers_general["protocol"]
 
         # status_code is None at this moment unless it is 400
         status_code = self.res_headers['Status']
@@ -427,6 +429,17 @@ class Parser:
             self.print_res_headers(response)
             return response.encode()
 
+    def set_cookie(self, keys_values):
+        print("in set_cookie: ")
+        # print(keys_values)
+        try:
+            for key in keys_values:
+                self.respnose += 'Set-Cookie: {}={}\r\n'.format(
+                    key, keys_values[key])
+        except:
+            pass
+        # print(msg)
+
 
 class Server():
     def __init__(self, host, port):
@@ -453,9 +466,18 @@ class ClientThread(threading.Thread, Parser):
     def run(self):
         # while True:
         msg = self.client_socket.recv(4096).decode()
-        print("****  request msg: Start  ****")
+        """
+            If msg is None... For now sendd 400
+        """
+        if msg == None:
+            self.res_headers['Status'] = 400
+            self.process_query()
+            self.client_socket.close()
+
+        print("****************************  Request msg: Start  ********************")
         print(msg)
-        print("****   request msg: end   ****\n")
+        print(
+            "********************************   Request msg: end   ********************\n")
         self.extract_msg(msg)
         self.extract_headers()
         # if self.res_headers['Status'] == 400: #400 Bad Request
