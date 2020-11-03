@@ -1,5 +1,7 @@
 import os
+import time
 from pathlib import Path
+from time import gmtime, strftime
 
 
 def resolve_uri(uri):
@@ -26,14 +28,32 @@ def resolve_uri(uri):
         return (path, 404)
 
 
-# print(resolve_uri("/image_server_012.jpeg"))
-uri = "/moodle/course/view.php?id=10&name=Sarvesh"
-try:
-    a, b = uri.split('?')
-    b = b.split('&')
-except:
-    a = uri
-    b = None
-print("a: ", a)
-print("b: ", b)
+# # print(resolve_uri("/image_server_012.jpeg"))
+# uri = "/moodle/course/view.php?id=10&name=Sarvesh"
+# try:
+#     a, b = uri.split('?')
+#     b = b.split('&')
+# except:
+#     a = uri
+#     b = None
+# print("a: ", a)
+# print("b: ", b)
 # print(uri.split('?'))
+print("Create :  {}".format(time.ctime(os.path.getctime("server.py"))))
+print("Last Modified: {}".format(time.ctime(os.path.getmtime("server.py"))))
+print(strftime("%a, %d %b %Y %H:%M:%S GMT", gmtime()))
+print(time.ctime(os.path.getmtime("server.py")))
+
+# print(datetime.datetime.strptime(time.ctime(), "%a %b %d %H:%M:%S %Y"))
+
+# print(time.ctime(os.path.getctime("server.py")))
+# print(time.ctime(os.path.getmtime("server.py")))
+print(os.path.getctime("server.py"))
+
+
+def get_modification_time(file_name):
+    return strftime("%a, %d %b %Y %H:%M:%S GMT", time.localtime(os.path.getmtime(file_name)))
+
+
+print("fun: ")
+print(get_modification_time("server.py"))

@@ -18,6 +18,7 @@ STATUS_CODES = {
     200: 'OK',
     201: "Created",
     300: 'Redirection',
+    304: 'Not Modified',
     400: 'Bad Request',
     404: 'Not Found',
     500: 'Server-Error'
@@ -55,7 +56,8 @@ class Parser:
             "protocol": None,
             "Request URL": None,
             "User-Agent": None,
-            "Cookie": None
+            "Cookie": None,
+            "If-Modified-Since": None
         }
         self.respnose = None
         self.res_headers = {
@@ -67,7 +69,8 @@ class Parser:
             "Expires": None,
             "Content-Length": None,
             "Content-language": 'en',
-            'Status': None
+            'Status': None,
+            'Last-Modified': None
         }
 
     def return_CRLF(self, msg):
@@ -143,6 +146,7 @@ class Parser:
             if self.res_headers[attr]:
                 response += "{}: {}\r\n".format(attr,
                                                 str(self.res_headers[attr]))
+        return response
 
     def print_res_headers(self, msg):
         print("\n************************     response headers: Start    *****************")
@@ -239,7 +243,7 @@ class Parser:
         if self.res_headers['Status'] == 400:
             response = "{} {} {}\r\n".format(str(http_version), 400,
                                              STATUS_CODES[400])  # Status line
-            self.add_res_headers(response)
+            response = self.add_res_headers(response)
             response += "\r\n400 Bad Request\r\n"
             self.print_res_headers(response)
             return response.encode()
@@ -258,16 +262,15 @@ class Parser:
             # if request is valid but status code != 200
             # i.e  404 Not Found, 403 Forbidden
             if status_code != 200:
-                self.add_res_headers(response)
+                response = self.add_res_headers(response)
+                self.print_res_headers(response)
                 if status_code == 404:
                     if method == "GET":
                         response += "\r\n" + "404 Page Not Found\r\n"
-                    self.print_res_headers(response)
                     return response.encode()
                 else:
                     if method == "GET":
                         response += "\r\n" + "Not 200 Not Okay\r\n"
-                    self.print_res_headers(response)
                     return response.encode()
 
             if file_extention in ["ico", "jpeg", "jpg"]:
@@ -275,16 +278,30 @@ class Parser:
                 # print("starting image proceesing")
                 # file_obj = open(file_path, 'rb')
                 # image_raw = file_obj.read()
-                self.res_body = get_data(
+                self.res_headers['Last-Modified'], self.res_body = get_data(
                     file_path, file_extention, self.queries)
+
+                if self.res_headers['Last-Modified'] == self.req_headers_general['If-Modified-Since']:
+                    print("not modified image")
+                    status_code = 304
+                    self.res_headers['Status'] = status_code
+                    response = "{} {} {}\r\n".format(str(http_version), status_code,
+                                                     STATUS_CODES[status_code])  # Status line
+                    response = self.add_res_headers(response)
+                    response += "\r\n"
+                    self.print_res_headers(response)
+                    return response.encode()
+
+                print(" modified image")
                 self.res_headers["Content-Length"] = len(self.res_body)
                 self.res_headers["Accept-ranges"] = "bytes"
                 self.res_headers["Content-type"] = CONTENT_TYPE[file_extention]
 
-                self.add_res_headers(response)
+                response = self.add_res_headers(response)
                 response.strip()
-                response += "\r\n"
                 self.print_res_headers(response)
+                response += "\r\n"
+
                 # encode headers (text); do not encode image_raw as it is binary
                 response = response.encode()
                 # self.res_body = image_raw
@@ -306,15 +323,25 @@ class Parser:
                 # print(self.res_body)
 
                 ###
-                self.res_body = get_data(
+                self.res_headers['Last-Modified'], self.res_body = get_data(
                     file_path=file_path, file_extension=file_extention, queries=self.queries)
+
+                if self.res_headers['Last-Modified'] == self.req_headers_general['If-Modified-Since']:
+                    status_code = 304
+                    self.res_headers['Status'] = status_code
+                    response = "{} {} {}\r\n".format(str(http_version), status_code,
+                                                     STATUS_CODES[status_code])  # Status line
+                    response = self.add_res_headers(response)
+                    response += "\r\n"
+                    self.print_res_headers(response)
+                    return response.encode()
                 ###
                 if self.res_body:
                     self.res_headers["Content-type"] = CONTENT_TYPE[file_extention]
                     self.res_headers["Content-Length"] = len(self.res_body)
 
                 # print("Adding headers by add_res_headers")
-                self.add_res_headers(response)
+                response = self.add_res_headers(response)
                 self.print_res_headers(response)
                 if method == "GET":
                     if self.res_body:
@@ -350,7 +377,7 @@ class Parser:
             status_code = post_data(uri=file_path, msg_body=self.msg_body,
                                     file_extension=file_extention, content_type=self.req_headers_general["Content-Type"])
             print("out of post_data()")
-            self.add_res_headers(response)
+            response = self.add_res_headers(response)
             response += "\r\n" + "POST Successful"
             self.print_res_headers(response)
             return response.encode()
@@ -371,7 +398,7 @@ class Parser:
                 self.res_body = "File Created\r\n"
             self.res_headers['Status'] = status_code
             self.res_headers["Content-Length"] = len(self.res_body)
-            self.add_res_headers(response)
+            response = self.add_res_headers(response)
             response += "\r\n" + self.msg_body
             return response.encode()
 
@@ -384,7 +411,7 @@ class Parser:
                                                  STATUS_CODES[status_code])  # Status line
                 self.res_body = STATUS_CODES[status_code]
                 self.res_headers["Content-Length"] = len(self.msg_body)
-                self.add_res_headers(response)
+                response = self.add_res_headers(response)
                 response += "\r\n" + self.res_body
                 return response.encode()
 
@@ -405,7 +432,7 @@ class Parser:
                 self.res_body = "Internal Server Error\n"
 
             self.res_headers["Content-Length"] = len(self.msg_body)
-            self.add_res_headers(response)
+            response = self.add_res_headers(response)
             response += "\r\n" + self.res_body
             print("Response : ")
             self.print_res_headers(response)
@@ -417,7 +444,8 @@ class Parser:
             self.res_headers['Status'] = status_code
             reason_phrase = STATUS_CODES[status_code]
             response = "{} {} {}".format(str(http_version), 400, reason_phrase)
-            self.res_headers(response)
+            # self.res_headers(response)
+            response = self.add_res_headers(response)
             response += "\r\n"
             self.print_res_headers(response)
             return response.encode()

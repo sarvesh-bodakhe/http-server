@@ -28,7 +28,9 @@ def access_log(status_code, size, request_line, client_ip, user_agent):
 
 def get_time():
     localtime = time.asctime(time.localtime(time.time()))
-    localtime = localtime.split(" ")
+    # print(localtime)
+    localtime = localtime.split()
+    # print(localtime)
     return "[" + (localtime[2]) + "/" + localtime[1] + "/" + \
         localtime[4] + ":" + str(localtime[3]) + " +0530" + "]"
 

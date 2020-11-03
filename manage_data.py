@@ -1,6 +1,8 @@
 import csv
 import json
 import os
+import time
+from time import gmtime, strftime
 
 
 def display_file():
@@ -262,6 +264,10 @@ def post_data(uri, msg_body, file_extension, content_type):
     return 400
 
 
+def get_modification_time(file_name):
+    return strftime("%a, %d %b %Y %H:%M:%S GMT", time.localtime(os.path.getmtime(file_name)))
+
+
 def get_data(file_path, file_extension=None, queries=None):
     print("in get_data()-> file_path:", file_path, " file_extension:",
           file_extension, "queries:", queries)
@@ -269,7 +275,7 @@ def get_data(file_path, file_extension=None, queries=None):
     if file_extension in ["ico", "jpeg", "jpg"]:
         file_obj = open(file_path, 'rb')
         image_raw = file_obj.read()
-        return image_raw
+        return (get_modification_time(file_path), image_raw)
 
     elif file_extension in ["html", "json", "js"]:
         if file_extension == "json" and queries:
@@ -284,12 +290,12 @@ def get_data(file_path, file_extension=None, queries=None):
                     print("obj[attr]: ", obj[attr])
                     if str(obj[attr]) == str(queries[attr]):
                         print("found")
-                        return json.dumps(obj)
-            return "No Data Available"
+                        return (None, json.dumps(obj))
+            return (None, "No Data Available")
 
         file_obj = open(file_path, "r")
         text_data = file_obj.read()
-        return text_data
+        return (get_modification_time(file_path), text_data)
 
 
 # def set_cookie(keys_values, msg=''):
