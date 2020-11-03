@@ -182,7 +182,8 @@ def post_data(uri, msg_body, file_extension, content_type):
         temp_dict = dict()
         temp_msg = msg_body.strip(boundary).split(boundary)
         print("temp_split: ")
-        temp_msg = temp_msg[:-1]
+        """IF image is given, No need to exclude last element"""
+        # temp_msg = temp_msg[:-1]
         print(temp_msg)
 
         # print("split by boundary :", temp_msg)
@@ -218,7 +219,7 @@ def post_data(uri, msg_body, file_extension, content_type):
                 file_obj.write(value)
                 file_obj.close()
             except:
-                print("Unable to create file")
+                # print("Unable to create file")
                 pass
 
             info_dict['value'] = value

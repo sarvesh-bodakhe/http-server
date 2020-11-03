@@ -486,7 +486,8 @@ class ClientThread(threading.Thread, Parser):
 
     def run(self):
         # while True:
-        msg = self.client_socket.recv(4096).decode()
+        """ iso-8859-1 decoding to decode image(binary files without any issues) """
+        msg = self.client_socket.recv(4096).decode("iso-8859-1")
         """
             If msg is None... For now sendd 400
         """
