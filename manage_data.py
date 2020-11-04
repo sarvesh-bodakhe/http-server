@@ -118,8 +118,8 @@ def put_data(uri, msg_body, file_extension, content_type):
 def post_data(uri, msg_body, file_extension, content_type):
     print("in post_data : uri: ", uri,  " file_extension: ",
           file_extension, " Content-type: ", content_type)
-    print("msg_body: ")
-    print(msg_body)
+    # print("msg_body: ")
+    # print(msg_body)
     uri = uri.strip('/')
     if os.path.exists(uri):
         print("File exits")
@@ -183,8 +183,8 @@ def post_data(uri, msg_body, file_extension, content_type):
         temp_msg = msg_body.strip(boundary).split(boundary)
         print("temp_split: ")
         """IF image is given, No need to exclude last element"""
-        # temp_msg = temp_msg[:-1]
-        print(temp_msg)
+        temp_msg = temp_msg[:-1]
+        # print(temp_msg)
 
         # print("split by boundary :", temp_msg)
         for line in temp_msg:
@@ -198,51 +198,77 @@ def post_data(uri, msg_body, file_extension, content_type):
                 if file is empty. error will occur here
             """
             try:
-                info, value = temp.split('\r\n\r\n')
+                info, value = temp.split('\r\n\r\n', 1)
             except:
                 continue
-            # print(temp, value)
+            # print(info, value)
             info = info.split(';')
 
             info_dict['Content-Disposition'] = info[0].split(':')[1].strip()
             info_dict['name'] = info[1].split('=')[1].strip('"')
             try:
+                src = "src/data/postedFiles"
                 info_dict['filename'] = info[2].split(
-                    '\r\n')[0].split('=')[1].strip('"')
+                    '\r\n', 1)[0].split('=')[1].strip('"')
                 info_dict['Content-Type'] = info[2].split(
-                    '\r\n')[1].split(':')[1].strip()
+                    '\r\n', 1)[1].split(':')[1].strip()
                 file_path = os.path.join(
-                    "src/data/postedFiles", info_dict['filename'])
+                    src, info_dict['filename'])
 
-                print("file to create + uri: ", file_path)
-                file_obj = open(file_path, "w")
-                file_obj.write(value)
-                file_obj.close()
+                temp_dict['filename'] = info_dict['filename']
+                temp_dict['fileuri'] = file_path
+                print("file to create:", file_path)
+
+                extenstion_of_file = info_dict['filename'].split('.')[1]
+                if extenstion_of_file in ['jpeg, png, jpg']:
+                    try:
+                        file_obj = open(file_path, "wb")
+                        print("File opened")
+                        # value = value.encode('iso-8859-1')
+                        print("file-contents:")
+                        print("Viraj Value:")
+                        print(value.encode('iso-8859-1'))
+                        file_obj.write(value.encode('iso-8859-1'))
+                    # file_obj.write(value)
+                        print("File written")
+                        file_obj.close()
+                        print("file written successfully")
+                    except:
+                        print("Unable to open ", file_path)
+                else:
+                    try:
+                        file_obj = open(file_path, "w")
+                        file_obj.write(value)
+                        file_obj.close()
+                        print("text file successfully posted")
+                    except:
+                        print("Unable to open ", file_path)
             except:
-                # print("Unable to create file")
                 pass
-
+                # print(info, value)
+                # print("no file")
+                # print("Unable to create file")
             info_dict['value'] = value
-            print("Info_dict: ")
-            print(info_dict)
+            # print("Info_dict: ")
+            # print(info_dict)
 
             if info_dict['filename']:
                 print("File included")
             try:
-                temp_dict[info_dict['name']] = info_dict['value']
+                if not info_dict['filename']:
+                    print(info, value)
+                    temp_dict[info_dict['name']] = info_dict['value']
             except:
                 return 400
-            print()
+            # print()
 
-        temp_dict['filename'] = info_dict['filename']
-        temp_dict['fileuri'] = None
-        print("Object to append: ", temp_dict)
+        # print("Object to append: ", temp_dict)
         json_obj = json.dumps(temp_dict)
         json_obj = json.loads(json_obj)
         json_obj['Year'] = int(json_obj['Year'])
         json_obj['MIS'] = int(json_obj['MIS'])
 
-        print("json_obj: ", json_obj)
+        # print("json_obj: ", json_obj)
 
         if os.path.exists(uri):
             # print("File exits")

@@ -70,7 +70,8 @@ class Parser:
             "Content-Length": None,
             "Content-language": 'en',
             'Status': None,
-            'Last-Modified': None
+            'Last-Modified': None,
+            'Connection': "Close"
         }
 
     def return_CRLF(self, msg):
@@ -93,7 +94,7 @@ class Parser:
         if len(msg) >= 2:  # if len=2: request contains both headers and body
             self.msg_body = msg[1]
         print("in extract_msg: len(self.msg_body):  ", len(self.msg_body))
-        print("in extract_msg: self.msg_body: ", self.msg_body)
+        # print("in extract_msg: self.msg_body: ", self.msg_body)
         # if len(msg) > 2:
         # self.res_headers['Status'] = 400  # bad request
         return
@@ -125,7 +126,7 @@ class Parser:
         except:
             self.queries = {}
 
-        print("in extract_headers => self.queries : ", self.queries)
+        # print("in extract_headers => self.queries : ", self.queries)
         self.headers = self.headers[1:]
         for key_value in self.headers:
             attr, value = key_value.split(': ')
@@ -399,6 +400,7 @@ class Parser:
             self.res_headers['Status'] = status_code
             self.res_headers["Content-Length"] = len(self.res_body)
             response = self.add_res_headers(response)
+            self.print_res_headers(response)
             response += "\r\n" + self.msg_body
             return response.encode()
 
@@ -487,7 +489,7 @@ class ClientThread(threading.Thread, Parser):
     def run(self):
         # while True:
         """ iso-8859-1 decoding to decode image(binary files without any issues) """
-        msg = self.client_socket.recv(4096).decode("iso-8859-1")
+        msg = self.client_socket.recv(4096000009).decode("iso-8859-1")
         """
             If msg is None... For now sendd 400
         """
@@ -496,11 +498,13 @@ class ClientThread(threading.Thread, Parser):
             self.process_query()
             self.client_socket.close()
 
-        print("****************************  Request msg: Start  ********************")
-        print(msg)
-        print(
-            "********************************   Request msg: end   ********************\n")
+        # print("****************************  Request msg: Start  ********************")
+        # print(msg)
+        # print("*****************************   Request msg: end   ********************\n")
         self.extract_msg(msg)
+        print("****************************  Request Headers: Start  ********************")
+        print(self.headers)
+        print("************************   Request Headers: end   ********************\n")
         self.extract_headers()
         # if self.res_headers['Status'] == 400: #400 Bad Request
         self.process_query()
