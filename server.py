@@ -93,7 +93,10 @@ class Parser:
         self.headers = msg[0]
         if len(msg) >= 2:  # if len=2: request contains both headers and body
             self.msg_body = msg[1]
-        print("in extract_msg: len(self.msg_body):  ", len(self.msg_body))
+        if self.msg_body:
+            print("in extract_msg: len(self.msg_body):  ", len(self.msg_body))
+        else:
+            print("in extract_msg:request body is empty")
         # print("in extract_msg: self.msg_body: ", self.msg_body)
         # if len(msg) > 2:
         # self.res_headers['Status'] = 400  # bad request
@@ -498,13 +501,13 @@ class ClientThread(threading.Thread, Parser):
             self.process_query()
             self.client_socket.close()
 
-        # print("****************************  Request msg: Start  ********************")
-        # print(msg)
-        # print("*****************************   Request msg: end   ********************\n")
+        print("****************************  Request msg: Start  ********************")
+        print(msg)
+        print("*****************************   Request msg: end   ********************\n")
         self.extract_msg(msg)
-        print("****************************  Request Headers: Start  ********************")
-        print(self.headers)
-        print("************************   Request Headers: end   ********************\n")
+        # print("****************************  Request Headers: Start  ********************")
+        # print(self.headers)
+        # print("************************   Request Headers: end   ********************\n")
         self.extract_headers()
         # if self.res_headers['Status'] == 400: #400 Bad Request
         self.process_query()
