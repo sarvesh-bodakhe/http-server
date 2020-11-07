@@ -13,7 +13,7 @@ def display_file():
 
 def delete_data(uri, file_extension=None, queries=None):
     print("In delete_data")
-    print("uri: ", uri, " Query: ", queries, " extension: ", file_extension)
+    # print("uri: ", uri, " Query: ", queries, " extension: ", file_extension)
 
     if os.path.exists(uri):
         print("file exits")
@@ -34,12 +34,12 @@ def delete_data(uri, file_extension=None, queries=None):
                 obj_list = json.load(file_obj)
                 file_obj.close()
                 for obj in obj_list:
-                    print("obj: ", obj)
+                    # print("obj: ", obj)
                     for attr in queries:
                         # print("attr: ", attr, "Value: ", queries[attr])
                         # print("obj[attr]: ", obj[attr])
                         if str(obj[attr]) == str(queries[attr]):
-                            print("found")
+                            # print("found")
                             obj_list.remove(obj)
                             break
                 print("SuccessFully removed")
@@ -91,15 +91,14 @@ def delete_data(uri, file_extension=None, queries=None):
 
 
 def put_data(uri, msg_body, file_extension, content_type):
-    print("in put_data : uri: ", uri, " msg_body: ",
-          msg_body, " file_extension: ", file_extension, " Content-type: ", content_type)
+    # print("in put_data : uri: ", uri, " msg_body: ",msg_body, " file_extension: ", file_extension, " Content-type: ", content_type)
     uri = uri.strip('/')
 
     if os.path.exists(uri):
         """
             File exits. Open it and put request_body as file contents
         """
-        print("File exits")
+        # print("File exits")
         file_obj = open(uri, "w")
         file_obj.write(msg_body)
         file_obj.close()
@@ -108,7 +107,7 @@ def put_data(uri, msg_body, file_extension, content_type):
         """
             File Does not exit. Create it and put request_body as file contents
         """
-        print("File does not exit")
+        # print("File does not exit")
         file_obj = open(uri, "w")
         file_obj.write(msg_body)
         file_obj.close()
@@ -116,8 +115,7 @@ def put_data(uri, msg_body, file_extension, content_type):
 
 
 def post_data(uri, msg_body, file_extension, content_type):
-    print("in post_data : uri: ", uri,  " file_extension: ",
-          file_extension, " Content-type: ", content_type)
+    # print("in post_data : uri: ", uri,  " file_extension: ",file_extension, " Content-type: ", content_type)
     # print("msg_body: ")
     # print(msg_body)
     uri = uri.strip('/')
@@ -129,7 +127,7 @@ def post_data(uri, msg_body, file_extension, content_type):
     if content_type == "application/x-www-form-urlencoded":
 
         msg_body = msg_body.split('&')
-        print("msg_body: ", msg_body)
+        # print("msg_body: ", msg_body)
         temp_dict = dict()
         for i in msg_body:
             try:
@@ -141,15 +139,13 @@ def post_data(uri, msg_body, file_extension, content_type):
                 """  Wrong format   """
                 return 400
 
-        # temp_dict['filename'] = None
-        # temp_dict['fileuri'] = None
-        print("temp_dict: ", temp_dict)
+        # print("temp_dict: ", temp_dict)
         json_obj = json.dumps(temp_dict)
         json_obj = json.loads(json_obj)
         json_obj['Year'] = int(json_obj['Year'])
         json_obj['MIS'] = int(json_obj['MIS'])
 
-        print("json_obj: ", json_obj)
+        # print("json_obj: ", json_obj)
 
         if os.path.exists(uri):
             fp = open(uri, "r")
@@ -166,7 +162,7 @@ def post_data(uri, msg_body, file_extension, content_type):
         """
 
         """
-        print("content type is multipart/form-data")
+        # print("content type is multipart/form-data")
 
         """
             Do not know why boundary calculated is short of "--"
@@ -175,13 +171,13 @@ def post_data(uri, msg_body, file_extension, content_type):
             # print("Viraj requested: ", content_type.split(';')[1])
             # print("Vireaj reques ended")
             boundary = "--" + content_type.split(';')[1].split('=')[1]
-            print("Boundary calculated: ", boundary)
+            # print("Boundary calculated: ", boundary)
         except:
             return 400
 
         temp_dict = dict()
         temp_msg = msg_body.strip(boundary).split(boundary)
-        print("temp_split: ")
+        # print("temp_split: ")
         """IF image is given, No need to exclude last element"""
         temp_msg = temp_msg[:-1]
         # print(temp_msg)
@@ -217,22 +213,22 @@ def post_data(uri, msg_body, file_extension, content_type):
 
                 temp_dict['filename'] = info_dict['filename']
                 temp_dict['fileuri'] = file_path
-                print("file to create:", file_path)
+                # print("file to create:", file_path)
 
                 extenstion_of_file = info_dict['filename'].split('.')[1]
                 if extenstion_of_file in ['jpeg, png, jpg']:
                     try:
                         file_obj = open(file_path, "wb")
-                        print("File opened")
+                        # print("File opened")
                         # value = value.encode('iso-8859-1')
-                        print("file-contents:")
-                        print("Viraj Value:")
+                        # print("file-contents:")
+                        # print("Viraj Value:")
                         print(value.encode('iso-8859-1'))
                         file_obj.write(value.encode('iso-8859-1'))
                     # file_obj.write(value)
-                        print("File written")
+                        # print("File written")
                         file_obj.close()
-                        print("file written successfully")
+                        # print("file written successfully")
                     except:
                         print("Unable to open ", file_path)
                 else:
@@ -240,7 +236,7 @@ def post_data(uri, msg_body, file_extension, content_type):
                         file_obj = open(file_path, "w")
                         file_obj.write(value)
                         file_obj.close()
-                        print("text file successfully posted")
+                        # print("text file successfully posted")
                     except:
                         print("Unable to open ", file_path)
             except:
@@ -296,8 +292,7 @@ def get_modification_time(file_name):
 
 
 def get_data(file_path, file_extension=None, queries=None):
-    print("in get_data()-> file_path:", file_path, " file_extension:",
-          file_extension, "queries:", queries)
+    # print("in get_data()-> file_path:", file_path, " file_extension:", file_extension, "queries:", queries)
 
     if file_extension in ["ico", "jpeg", "jpg"]:
         file_obj = open(file_path, 'rb')
@@ -311,35 +306,15 @@ def get_data(file_path, file_extension=None, queries=None):
             obj_list = json.load(file_obj)
             to_return = []
             for obj in obj_list:
-                print("obj: ", obj)
+                # print("obj: ", obj)
                 for attr in queries:
-                    print("attr: ", attr, "Value: ", queries[attr])
-                    print("obj[attr]: ", obj[attr])
+                    # print("attr: ", attr, "Value: ", queries[attr])
+                    # print("obj[attr]: ", obj[attr])
                     if str(obj[attr]) == str(queries[attr]):
-                        print("found")
+                        # print("found")
                         return (None, json.dumps(obj))
             return (None, "No Data Available")
 
         file_obj = open(file_path, "r")
         text_data = file_obj.read()
         return (get_modification_time(file_path), text_data)
-
-
-# def set_cookie(keys_values, msg=''):
-#     print("in set_cookie: ")
-#     print(keys_values)
-#     try:
-#         for key in keys_values:
-#             msg += 'Set-Cookie: {}={}\r\n'.format(key, keys_values[key])
-#     except:
-#         pass
-#     print(msg)
-
-
-# dict1 = {
-#     "Name": "Sarvesh",
-#     "Password": 123
-# }
-
-# set_cookie(dict1)
-# display_file()

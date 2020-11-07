@@ -12,7 +12,7 @@ import log
 
 threads = []
 PORT = sys.argv[1]
-
+max_thread_count = 0
 STATUS_CODES = {
     100: 'Informational',
     200: 'OK',
@@ -93,13 +93,11 @@ class Parser:
         self.headers = msg[0]
         if len(msg) >= 2:  # if len=2: request contains both headers and body
             self.msg_body = msg[1]
-        if self.msg_body:
-            print("in extract_msg: len(self.msg_body):  ", len(self.msg_body))
-        else:
-            print("in extract_msg:request body is empty")
-        # print("in extract_msg: self.msg_body: ", self.msg_body)
-        # if len(msg) > 2:
-        # self.res_headers['Status'] = 400  # bad request
+
+        # if self.msg_body:
+        #     print("in extract_msg: len(self.msg_body):  ", len(self.msg_body))
+        # else:
+        #     print("in extract_msg:request body is empty")
         return
 
     def extract_headers(self):
@@ -150,6 +148,11 @@ class Parser:
             if self.res_headers[attr]:
                 response += "{}: {}\r\n".format(attr,
                                                 str(self.res_headers[attr]))
+        if self.cookies:
+            for attr in self.cookies:
+                response += "Set-Cookie: {}={}\r\n".format(
+                    attr, self.cookies[attr])
+
         return response
 
     def print_res_headers(self, msg):
@@ -159,11 +162,11 @@ class Parser:
         return
 
     def resolve_uri(self, uri):  # returns (file_path, file_extension, status_code)
-        print("in resolve_uri():\ninitial URI: " + uri)
+        # print("in resolve_uri():\ninitial URI: " + uri)
         # print("quries: ", self.queries)
         method = self.req_headers_general['method']
         root = "src"
-        # if request method is GET
+        """if request method is GET"""
         if method in ["GET", "HEAD"]:
 
             if uri == "/":
@@ -175,24 +178,26 @@ class Parser:
                 path = "src/data/data_file1.json"
                 file_extention = "json"
                 return (path, file_extention, 200)
-            # root directory is "src"
+            """root directory is "src"""
             uri = uri.strip('/')
-            # if url has some extension like .json, .php,.html, .js, .jpeg
+            """ if url has some extension like .json, .php,.html, .js, .jpeg """
             try:
                 file_extention = uri.split('.')[1]
             except:
                 file_extention = None
                 uri += "/index.html"
                 file_extention = "html"
-            # path will contain predicted path by joining root_directory and uri
+
+            """ path will contain predicted path by joining root_directory and uri"""
             path = os.path.join(root, uri)
-            print("path: ", path)
-            print("file_extension: ", file_extention)
-            # if file exits, return 200 OK
+            # print("path: ", path)
+            # print("file_extension: ", file_extention)
+
             if os.path.isfile(path):
+                """if file exits, return 200 OK"""
                 return (path, file_extention, 200)
-            # file does not exit, return 404
             else:
+                """ file does not exit, return 404"""
                 return (path, file_extention, 404)
 
         if method == "POST":
@@ -235,6 +240,12 @@ class Parser:
                                             gmtime())
         self.res_headers["Server"] = "localhost"
 
+        if not self.req_headers_general['Cookie']:
+            self.cookies = {
+                "Name": "Sarvesh",
+                "MIS": 1118031489
+            }
+
         method, URI, http_version = self.req_headers_general[
             'method'], self.req_headers_general[
                 'uri'], self.req_headers_general["protocol"]
@@ -249,7 +260,7 @@ class Parser:
                                              STATUS_CODES[400])  # Status line
             response = self.add_res_headers(response)
             response += "\r\n400 Bad Request\r\n"
-            self.print_res_headers(response)
+            # self.print_res_headers(response)
             return response.encode()
 
         # file_path, file_extention, status_code = self.resolve_uri(URI)
@@ -278,7 +289,7 @@ class Parser:
                     return response.encode()
 
             if file_extention in ["ico", "jpeg", "jpg"]:
-                print("file extention is : " + str(file_extention))
+                # print("file extention is : " + str(file_extention))
                 # print("starting image proceesing")
                 # file_obj = open(file_path, 'rb')
                 # image_raw = file_obj.read()
@@ -286,24 +297,24 @@ class Parser:
                     file_path, file_extention, self.queries)
 
                 if self.res_headers['Last-Modified'] == self.req_headers_general['If-Modified-Since']:
-                    print("not modified image")
+                    # print("not modified image")
                     status_code = 304
                     self.res_headers['Status'] = status_code
                     response = "{} {} {}\r\n".format(str(http_version), status_code,
                                                      STATUS_CODES[status_code])  # Status line
                     response = self.add_res_headers(response)
                     response += "\r\n"
-                    self.print_res_headers(response)
+                    # self.print_res_headers(response)
                     return response.encode()
 
-                print(" modified image")
+                # print(" modified image")
                 self.res_headers["Content-Length"] = len(self.res_body)
                 self.res_headers["Accept-ranges"] = "bytes"
                 self.res_headers["Content-type"] = CONTENT_TYPE[file_extention]
 
                 response = self.add_res_headers(response)
                 response.strip()
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 response += "\r\n"
 
                 # encode headers (text); do not encode image_raw as it is binary
@@ -311,22 +322,14 @@ class Parser:
                 # self.res_body = image_raw
                 # response += image_raw
 
-                ###
-                # with open(file_path, "r") as f:
                 if method == "GET":
                     response += self.res_body
                 ###
                 return response
 
             elif file_extention in ["html", "json", "js"]:
-                print("file extension is: " + str(file_extention))
-                # with open(file_path, "r") as f:
-                # html_data = f.read()
-                # self.res_body = get_data(file_path, self.queries, file_extention)
-                # self.res_body = html_data
-                # print(self.res_body)
+                # print("file extension is: " + str(file_extention))
 
-                ###
                 self.res_headers['Last-Modified'], self.res_body = get_data(
                     file_path=file_path, file_extension=file_extention, queries=self.queries)
 
@@ -337,7 +340,7 @@ class Parser:
                                                      STATUS_CODES[status_code])  # Status line
                     response = self.add_res_headers(response)
                     response += "\r\n"
-                    self.print_res_headers(response)
+                    # self.print_res_headers(response)
                     return response.encode()
                 ###
                 if self.res_body:
@@ -346,7 +349,7 @@ class Parser:
 
                 # print("Adding headers by add_res_headers")
                 response = self.add_res_headers(response)
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 if method == "GET":
                     if self.res_body:
                         response += "\r\n" + self.res_body + "\r\n"
@@ -362,37 +365,33 @@ class Parser:
                                                  STATUS_CODES[400])  # Status line
                 if method == "GET":
                     response += "\r\nExtenstion Of File not recognizable. So Bad Request 400\r\n"
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 return response.encode()
 
         # method other than GET
         elif method == "POST":
-            print("in Create_response(): method: POST")
+            # print("in Create_response(): method: POST")
             file_path, file_extention, status_code = self.resolve_uri(URI)
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              STATUS_CODES[status_code])  # Status line
             self.res_headers['Status'] = status_code
 
-            # if self.req_headers_general["Content-Type"] == "application/x-www-form-urlencoded":
-            # print(
-            # "in POST method application/x-www-form-urlencoded: msg_body\n" + self.msg_body)
-
-            print("calling post_data()")
+            # print("calling post_data()")
             status_code = post_data(uri=file_path, msg_body=self.msg_body,
                                     file_extension=file_extention, content_type=self.req_headers_general["Content-Type"])
-            print("out of post_data()")
+            # print("out of post_data()")
             response = self.add_res_headers(response)
             response += "\r\n" + "POST Successful"
-            self.print_res_headers(response)
+            # self.print_res_headers(response)
             return response.encode()
 
         elif method == "PUT":
             file_path, file_extention, status_code = self.resolve_uri(URI)
-            print("Calling manage_data.put_data")
+            # print("Calling manage_data.put_data")
             status_code = manage_data.put_data(uri=file_path, msg_body=self.msg_body, file_extension=file_extention,
                                                content_type=self.req_headers_general["Content-Type"])
-            print("Out of manage_data.put_data")
-            print("method : PUT: ", file_path, file_extention, status_code)
+            # print("Out of manage_data.put_data")
+            # print("method : PUT: ", file_path, file_extention, status_code)
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              STATUS_CODES[status_code])  # Status line
 
@@ -403,13 +402,13 @@ class Parser:
             self.res_headers['Status'] = status_code
             self.res_headers["Content-Length"] = len(self.res_body)
             response = self.add_res_headers(response)
-            self.print_res_headers(response)
+            # self.print_res_headers(response)
             response += "\r\n" + self.msg_body
             return response.encode()
 
         elif method == "DELETE":
             file_path, file_extention, status_code = self.resolve_uri(URI)
-            print("method : DELETE: ", file_path, file_extention, status_code)
+            # print("method : DELETE: ", file_path, file_extention, status_code)
 
             if status_code != 200:
                 response = "{} {} {}\r\n".format(str(http_version), status_code,
@@ -420,10 +419,10 @@ class Parser:
                 response += "\r\n" + self.res_body
                 return response.encode()
 
-            print("Calling delete_data()")
+            # print("Calling delete_data()")
             status_code = manage_data.delete_data(
                 uri=file_path, file_extension=file_extention, queries=self.queries)
-            print("After delete_data(): status_code: ", status_code)
+            # print("After delete_data(): status_code: ", status_code)
 
             reason_phrase = STATUS_CODES[status_code]
             self.res_headers['Status'] = status_code
@@ -439,8 +438,8 @@ class Parser:
             self.res_headers["Content-Length"] = len(self.msg_body)
             response = self.add_res_headers(response)
             response += "\r\n" + self.res_body
-            print("Response : ")
-            self.print_res_headers(response)
+            # print("Response : ")
+            # self.print_res_headers(response)
             return response.encode()
 
         else:
@@ -449,22 +448,10 @@ class Parser:
             self.res_headers['Status'] = status_code
             reason_phrase = STATUS_CODES[status_code]
             response = "{} {} {}".format(str(http_version), 400, reason_phrase)
-            # self.res_headers(response)
             response = self.add_res_headers(response)
             response += "\r\n"
-            self.print_res_headers(response)
+            # self.print_res_headers(response)
             return response.encode()
-
-    def set_cookie(self, keys_values):
-        print("in set_cookie: ")
-        # print(keys_values)
-        try:
-            for key in keys_values:
-                self.respnose += 'Set-Cookie: {}={}\r\n'.format(
-                    key, keys_values[key])
-        except:
-            pass
-        # print(msg)
 
 
 class Server():
@@ -487,10 +474,17 @@ class ClientThread(threading.Thread, Parser):
         self.ip = ip
         self.port = port
         self.client_socket = client_socket
+
         # print("New server socket thread started " + str(ip) + ":" + str(port))
 
     def run(self):
         # while True:
+        global max_thread_count
+        if max_thread_count < threading.activeCount():
+            max_thread_count = threading.activeCount()
+
+        print("Active Threads:{} Current Client Thread:{} max_thread_count:{}\n".format(
+            threading.activeCount(), threading.currentThread(), max_thread_count))
         """ iso-8859-1 decoding to decode image(binary files without any issues) """
         msg = self.client_socket.recv(4096000009).decode("iso-8859-1")
         """
@@ -501,9 +495,9 @@ class ClientThread(threading.Thread, Parser):
             self.process_query()
             self.client_socket.close()
 
-        print("****************************  Request msg: Start  ********************")
-        print(msg)
-        print("*****************************   Request msg: end   ********************\n")
+        # print("****************************  Request msg: Start  ********************")
+        # print(msg)
+        # print("*****************************   Request msg: end   ********************\n")
         self.extract_msg(msg)
         # print("****************************  Request Headers: Start  ********************")
         # print(self.headers)
@@ -517,7 +511,7 @@ class ClientThread(threading.Thread, Parser):
             self.req_headers_general['protocol']
         log.access_log(status_code=self.res_headers["Status"], size=self.res_headers["Content-Length"], request_line=request_line,
                        client_ip=self.ip, user_agent=self.req_headers_general['User-Agent'])
-        print_linebreak()
+        # print_linebreak()
 
     def process_query(self):
         response = self.create_response()
@@ -529,11 +523,13 @@ if __name__ == "__main__":
     port = int(sys.argv[1])
     http_server = Server('', port)
     http_server.start_server()
-    print_linebreak()
+    # print_linebreak()
+    print("Main Threads:{}\tCurrent Main Thread:{}\n".format(
+        threading.activeCount(), threading.currentThread()))
     while True:
         (client_socket, (ip, port)) = http_server.server_socket.accept()
         newClientThread = ClientThread(ip, port, client_socket)
-        threads.append(newClientThread)
+        # threads.append(newClientThread)
         # print("total sockets: " + str(len(threads)) + "\tcount: " +
         #       str(threading.active_count()))
         newClientThread.start()
