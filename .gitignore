@@ -1,3 +1,4 @@
-log/access.log
+src/data
+log/
+*.log
 __pycache__
-data
