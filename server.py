@@ -9,9 +9,21 @@ import base64
 import zlib
 import manage_data
 import log
+from configparser import ConfigParser
 
+config = ConfigParser()
+config.read('config.ini')
+
+# documnetRoot = 'src'
+documnetRoot = config['SERVER']['documentRoot']
+documnetRoot = documnetRoot.strip("'")
+# print(documnetRoot.strip("'"))
+print(os.getcwd())
 threads = []
-PORT = sys.argv[1]
+PORT = int(sys.argv[1])
+# PORT = int(config['SERVER']['port'])
+logDir = config['SERVER']['logDirectory']
+logDir = logDir.strip("'")
 max_thread_count = 0
 STATUS_CODES = {
     100: 'Informational',
@@ -165,20 +177,21 @@ class Parser:
         # print("in resolve_uri():\ninitial URI: " + uri)
         # print("quries: ", self.queries)
         method = self.req_headers_general['method']
-        root = "src"
+        # documnetRoot = "src"
         """if request method is GET"""
         if method in ["GET", "HEAD"]:
 
             if uri == "/":
                 # print("Path exits")
                 path = "src/index.html"
+                path = os.path.join(documnetRoot, "index.html")
                 file_extention = "html"
                 return (path, file_extention, 200)
             if uri == "/data":
                 path = "src/data/data_file1.json"
                 file_extention = "json"
                 return (path, file_extention, 200)
-            """root directory is "src"""
+            """documnetRoot directory is "src"""
             uri = uri.strip('/')
             """ if url has some extension like .json, .php,.html, .js, .jpeg """
             try:
@@ -188,8 +201,8 @@ class Parser:
                 uri += "/index.html"
                 file_extention = "html"
 
-            """ path will contain predicted path by joining root_directory and uri"""
-            path = os.path.join(root, uri)
+            """ path will contain predicted path by joining documnetRoot_directory and uri"""
+            path = os.path.join(documnetRoot, uri)
             # print("path: ", path)
             # print("file_extension: ", file_extention)
 
@@ -210,7 +223,7 @@ class Parser:
                 file_extention = uri.split('.')[1]
             except:
                 file_extention = None
-            path = os.path.join(root, uri)
+            path = os.path.join(documnetRoot, uri)
             return (path, file_extention, 200)
 
         if method == "PUT":
@@ -219,7 +232,7 @@ class Parser:
                 file_extention = uri.split('.')[1]
             except:
                 file_extention = None
-            path = os.path.join(root, uri)
+            path = os.path.join(documnetRoot, uri)
             return (path, file_extention, 200)
 
         if method == "DELETE":
@@ -228,7 +241,7 @@ class Parser:
                 file_extention = uri.split('.')[1]
             except:
                 file_extention = None
-            path = os.path.join(root, uri)
+            path = os.path.join(documnetRoot, uri)
             if os.path.isfile(path):
                 return(path, file_extention, 200)
             else:
@@ -304,7 +317,7 @@ class Parser:
                                                      STATUS_CODES[status_code])  # Status line
                     response = self.add_res_headers(response)
                     response += "\r\n"
-                    # self.print_res_headers(response)
+                    self.print_res_headers(response)
                     return response.encode()
 
                 # print(" modified image")
@@ -314,7 +327,7 @@ class Parser:
 
                 response = self.add_res_headers(response)
                 response.strip()
-                # self.print_res_headers(response)
+                self.print_res_headers(response)
                 response += "\r\n"
 
                 # encode headers (text); do not encode image_raw as it is binary
@@ -495,9 +508,9 @@ class ClientThread(threading.Thread, Parser):
             self.process_query()
             self.client_socket.close()
 
-        # print("****************************  Request msg: Start  ********************")
-        # print(msg)
-        # print("*****************************   Request msg: end   ********************\n")
+        print("****************************  Request msg: Start  ********************")
+        print(msg)
+        print("*****************************   Request msg: end   ********************\n")
         self.extract_msg(msg)
         # print("****************************  Request Headers: Start  ********************")
         # print(self.headers)
@@ -510,7 +523,7 @@ class ClientThread(threading.Thread, Parser):
             self.req_headers_general['uri'] + " " + \
             self.req_headers_general['protocol']
         log.access_log(status_code=self.res_headers["Status"], size=self.res_headers["Content-Length"], request_line=request_line,
-                       client_ip=self.ip, user_agent=self.req_headers_general['User-Agent'])
+                       client_ip=self.ip, user_agent=self.req_headers_general['User-Agent'], logDir=logDir)
         # print_linebreak()
 
     def process_query(self):
@@ -520,7 +533,7 @@ class ClientThread(threading.Thread, Parser):
 
 
 if __name__ == "__main__":
-    port = int(sys.argv[1])
+    port = PORT
     http_server = Server('', port)
     http_server.start_server()
     # print_linebreak()
