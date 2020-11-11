@@ -97,7 +97,7 @@ class Parser:
 
     def extract_msg(self, msg):
         msg = msg.split('\r\n\r\n', 1)
-        # print("in extract_msg: msg: ")
+        print("in extract_msg: msg: ")
         count = 1
         # for i in msg:
         #     print(count, i)
@@ -353,7 +353,7 @@ class Parser:
                                                      STATUS_CODES[status_code])  # Status line
                     response = self.add_res_headers(response)
                     response += "\r\n"
-                    # self.print_res_headers(response)
+                    self.print_res_headers(response)
                     return response.encode()
                 ###
                 if self.res_body:
@@ -362,7 +362,7 @@ class Parser:
 
                 # print("Adding headers by add_res_headers")
                 response = self.add_res_headers(response)
-                # self.print_res_headers(response)
+                self.print_res_headers(response)
                 if method == "GET":
                     if self.res_body:
                         response += "\r\n" + self.res_body + "\r\n"
@@ -389,13 +389,13 @@ class Parser:
                                              STATUS_CODES[status_code])  # Status line
             self.res_headers['Status'] = status_code
 
-            # print("calling post_data()")
+            print("calling post_data()")
             status_code = post_data(uri=file_path, msg_body=self.msg_body,
                                     file_extension=file_extention, content_type=self.req_headers_general["Content-Type"])
-            # print("out of post_data()")
+            print("out of post_data()")
             response = self.add_res_headers(response)
             response += "\r\n" + "POST Successful"
-            # self.print_res_headers(response)
+            self.print_res_headers(response)
             return response.encode()
 
         elif method == "PUT":
@@ -508,13 +508,13 @@ class ClientThread(threading.Thread, Parser):
             self.process_query()
             self.client_socket.close()
 
-        print("****************************  Request msg: Start  ********************")
-        print(msg)
-        print("*****************************   Request msg: end   ********************\n")
+        # print("****************************  Request msg: Start  ********************")
+        # print(msg)
+        # print("*****************************   Request msg: end   ********************\n")
         self.extract_msg(msg)
-        # print("****************************  Request Headers: Start  ********************")
-        # print(self.headers)
-        # print("************************   Request Headers: end   ********************\n")
+        print("****************************  Request Headers: Start  ********************")
+        print(self.headers)
+        print("************************   Request Headers: end   ********************\n")
         self.extract_headers()
         # if self.res_headers['Status'] == 400: #400 Bad Request
         self.process_query()

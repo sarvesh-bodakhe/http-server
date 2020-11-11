@@ -116,7 +116,8 @@ def put_data(uri, msg_body, file_extension, content_type):
 
 
 def post_data(uri, msg_body, file_extension, content_type):
-    # print("in post_data : uri: ", uri,  " file_extension: ",file_extension, " Content-type: ", content_type)
+    print("in post_data : uri: ", uri,  " file_extension: ",
+          file_extension, " Content-type: ", content_type)
     # print("msg_body: ")
     # print(msg_body)
     uri = uri.strip('/')
@@ -203,21 +204,27 @@ def post_data(uri, msg_body, file_extension, content_type):
 
             info_dict['Content-Disposition'] = info[0].split(':')[1].strip()
             info_dict['name'] = info[1].split('=')[1].strip('"')
+            print("name: ", info_dict['name'])
             try:
-                src = "src/data/postedFiles"
+                path_to_postDir = os.path.join(
+                    documnetRoot, "data", "postedFiles")
                 info_dict['filename'] = info[2].split(
                     '\r\n', 1)[0].split('=')[1].strip('"')
                 info_dict['Content-Type'] = info[2].split(
                     '\r\n', 1)[1].split(':')[1].strip()
                 file_path = os.path.join(
-                    src, info_dict['filename'])
+                    path_to_postDir, info_dict['filename'])
 
                 temp_dict['filename'] = info_dict['filename']
                 temp_dict['fileuri'] = file_path
                 # print("file to create:", file_path)
+                print(
+                    "filename:{} content-type:{}".format(info_dict['filename'], info_dict['Content-Type']))
 
                 extenstion_of_file = info_dict['filename'].split('.')[1]
-                if extenstion_of_file in ['jpeg, png, jpg']:
+                # if extenstion_of_file in ['jpeg', 'png', 'jpg']:
+                if info_dict['Content-Type'] in ["image/jpeg", "image/jpg"] or extenstion_of_file in ['jpeg', 'png', 'jpg']:
+                    print("image is of type jpg, jpeg, png - Binary")
                     try:
                         file_obj = open(file_path, "wb")
                         # print("File opened")
@@ -226,13 +233,15 @@ def post_data(uri, msg_body, file_extension, content_type):
                         # print("Viraj Value:")
                         print(value.encode('iso-8859-1'))
                         file_obj.write(value.encode('iso-8859-1'))
+                        print("image written in file")
                     # file_obj.write(value)
                         # print("File written")
                         file_obj.close()
                         # print("file written successfully")
                     except:
                         print("Unable to open ", file_path)
-                else:
+                elif extenstion_of_file in ['txt', 'csv', 'js', 'html']:
+                    print("image is of type txt, csv, html, js- Non Binary")
                     try:
                         file_obj = open(file_path, "w")
                         file_obj.write(value)
