@@ -1,4 +1,8 @@
 src/data
 log/
 *.log
-__pycache__
+__pycache__/*
+*.pyc
+__pycache__/manage_data.cpython-36.pyc
+__pycache__/manage_data.cpython-36.pyc
+

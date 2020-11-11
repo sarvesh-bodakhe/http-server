@@ -1,3 +1,4 @@
+from configparser import ConfigParser
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import as_completed
 import threading
@@ -17,5 +18,7 @@ def main():
         print(result)
 
 
-if __name__ == '__main__':
-    main()
+config = ConfigParser()
+config.read('config.ini')
+print(config.sections())
+print(config['SERVER']['port'])
