@@ -58,6 +58,9 @@ METHODS IMPLEMENTED :
    "http://localhost:2000/form.html"
    "http://localhost:2000/form2.html"
    "http://localhost:2000/"
+   View posted( by form) data at:
+   "http://localhost:2000/data/data/data_file3.json"
+   "http://localhost:2000/data/data/data_file1.json"
 
 - HEAD METHOD
 
