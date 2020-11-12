@@ -9,6 +9,7 @@ import base64
 import zlib
 import manage_data
 import log
+import mimetypes
 from configparser import ConfigParser
 
 config = ConfigParser()
@@ -32,8 +33,10 @@ STATUS_CODES = {
     300: 'Redirection',
     304: 'Not Modified',
     400: 'Bad Request',
+    403: 'Forbidden',
     404: 'Not Found',
-    500: 'Server-Error'
+    500: 'Server-Error',
+    505: 'HTTP Version Not Supported'
 }
 files = {'/': "src/index.html"}
 
@@ -83,7 +86,8 @@ class Parser:
             "Content-language": 'en',
             'Status': None,
             'Last-Modified': None,
-            'Connection': "Close"
+            'Connection': "Close",
+            "Location": None
         }
 
     def return_CRLF(self, msg):
@@ -177,20 +181,26 @@ class Parser:
         # print("in resolve_uri():\ninitial URI: " + uri)
         # print("quries: ", self.queries)
         method = self.req_headers_general['method']
-        # documnetRoot = "src"
+        global documnetRoot
         """if request method is GET"""
         if method in ["GET", "HEAD"]:
 
             if uri == "/":
                 # print("Path exits")
-                path = "src/index.html"
                 path = os.path.join(documnetRoot, "index.html")
                 file_extention = "html"
-                return (path, file_extention, 200)
+                if os.access(path, os.R_OK):
+                    return (path, file_extention, 200)
+                else:
+                    return (path, file_extention, 403)
             if uri == "/data":
                 path = "src/data/data_file1.json"
+                path = os.path.join(documnetRoot, "data", "data_file1.json")
                 file_extention = "json"
-                return (path, file_extention, 200)
+                if os.access(path, os.R_OK):
+                    return (path, file_extention, 200)
+                else:
+                    return (path, file_extention, 403)
             """documnetRoot directory is "src"""
             uri = uri.strip('/')
             """ if url has some extension like .json, .php,.html, .js, .jpeg """
@@ -208,23 +218,40 @@ class Parser:
 
             if os.path.isfile(path):
                 """if file exits, return 200 OK"""
-                return (path, file_extention, 200)
+                if os.access(path, os.R_OK):
+                    return (path, file_extention, 200)
+                else:
+                    return (path, file_extention, 403)
             else:
                 """ file does not exit, return 404"""
                 return (path, file_extention, 404)
 
         if method == "POST":
+            print("resolve uri post. uri:{}".format(uri))
             if uri == "/data":
-                path = "src/data/data_file1.json"
+                # path = "src/data/data_file1.json"
+                path = os.path.join(documnetRoot, "data", "data_file1.json")
                 file_extention = "json"
-                return (path, file_extention, 200)
+                if os.access(path, os.W_OK):
+                    return (path, file_extention, 200)
+                else:
+                    return (path, file_extention, 403)
             uri = uri.strip('/')
             try:
                 file_extention = uri.split('.')[1]
             except:
                 file_extention = None
+            print("doctumetRoot:{}".format(documnetRoot))
             path = os.path.join(documnetRoot, uri)
-            return (path, file_extention, 200)
+            print("path:", path)
+            print("path calculated:{}".format(path))
+            if os.access(path=path, mode=os.F_OK):
+                if os.access(path, os.W_OK):
+                    return (path, file_extention, 200)
+                else:
+                    return (path, file_extention, 403)
+            else:
+                return (path, file_extention, 200)
 
         if method == "PUT":
             uri = uri.strip('/')
@@ -233,7 +260,16 @@ class Parser:
             except:
                 file_extention = None
             path = os.path.join(documnetRoot, uri)
-            return (path, file_extention, 200)
+
+            """" Check For Existance of file"""
+            if os.access(path=path, mode=os.F_OK):
+                if os.access(path=path, mode=os.W_OK):
+                    """"If write access"""
+                    return (path, file_extention, 200)
+                else:
+                    return (path, file_extention, 403)
+            else:
+                return (path, file_extention, 200)
 
         if method == "DELETE":
             uri = uri.strip('/')
@@ -243,7 +279,10 @@ class Parser:
                 file_extention = None
             path = os.path.join(documnetRoot, uri)
             if os.path.isfile(path):
-                return(path, file_extention, 200)
+                if os.access(path=path, mode=os.W_OK):
+                    return(path, file_extention, 200)
+                else:
+                    return(path, file_extention, 403)
             else:
                 return(path, file_extention, 404)
 
@@ -262,6 +301,13 @@ class Parser:
         method, URI, http_version = self.req_headers_general[
             'method'], self.req_headers_general[
                 'uri'], self.req_headers_general["protocol"]
+
+        if not http_version == "HTTP/1.1":
+            response = "{} {} {}\r\n".format(
+                str(http_version), 505, STATUS_CODES[505])  # Status line
+            response = self.add_res_headers(response)
+            response += "\r\HTTP Version Must Be 1.1"
+            return response.encode()
 
         # status_code is None at this moment unless it is 400
         status_code = self.res_headers['Status']
@@ -282,9 +328,8 @@ class Parser:
 
         if method in ["GET", "HEAD"]:
             file_path, file_extention, status_code = self.resolve_uri(URI)
-            reason_phrase = STATUS_CODES[status_code]
             response = "{} {} {}\r\n".format(str(http_version), status_code,
-                                             reason_phrase)  # Status line
+                                             STATUS_CODES[status_code])  # Status line
 
             self.res_headers['Status'] = status_code
             # if request is valid but status code != 200
@@ -296,16 +341,17 @@ class Parser:
                     if method == "GET":
                         response += "\r\n" + "404 Page Not Found\r\n"
                     return response.encode()
+                elif status_code == 403:
+                    if method == "GET":
+                        response += "\r\n" + "403 Forbidden\r\n"
+                    return response.encode()
                 else:
                     if method == "GET":
                         response += "\r\n" + "Not 200 Not Okay\r\n"
                     return response.encode()
 
             if file_extention in ["ico", "jpeg", "jpg"]:
-                # print("file extention is : " + str(file_extention))
-                # print("starting image proceesing")
-                # file_obj = open(file_path, 'rb')
-                # image_raw = file_obj.read()
+                """ get_data() function returns tuple (last-modified date,file_data)"""
                 self.res_headers['Last-Modified'], self.res_body = get_data(
                     file_path, file_extention, self.queries)
 
@@ -321,9 +367,12 @@ class Parser:
                     return response.encode()
 
                 # print(" modified image")
-                self.res_headers["Content-Length"] = len(self.res_body)
+                # self.res_headers["Content-Length"] = len(self.res_body)
+                self.res_headers["Content-Length"] = os.path.getsize(file_path)
                 self.res_headers["Accept-ranges"] = "bytes"
-                self.res_headers["Content-type"] = CONTENT_TYPE[file_extention]
+                # self.res_headers["Content-type"] = CONTENT_TYPE[file_extention]
+                self.res_headers["Content-type"] = mimetypes.guess_type(
+                    url=file_path)[0]
 
                 response = self.add_res_headers(response)
                 response.strip()
@@ -357,8 +406,11 @@ class Parser:
                     return response.encode()
                 ###
                 if self.res_body:
-                    self.res_headers["Content-type"] = CONTENT_TYPE[file_extention]
-                    self.res_headers["Content-Length"] = len(self.res_body)
+                    # self.res_headers["Content-type"] = CONTENT_TYPE[file_extention]
+                    self.res_headers["Content-type"] = mimetypes.guess_type(
+                        url=file_path)[0]
+                    self.res_headers["Content-Length"] = os.path.getsize(
+                        file_path)
 
                 # print("Adding headers by add_res_headers")
                 response = self.add_res_headers(response)
@@ -383,40 +435,81 @@ class Parser:
 
         # method other than GET
         elif method == "POST":
-            # print("in Create_response(): method: POST")
+            print("in Create_response(): method: POST")
             file_path, file_extention, status_code = self.resolve_uri(URI)
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              STATUS_CODES[status_code])  # Status line
             self.res_headers['Status'] = status_code
+
+            if status_code in [403]:
+                print("resolve uri returned 403")
+                response += "\r\n Forbidden"
+                self.print_res_headers(response)
+                return response.encode()
 
             print("calling post_data()")
             status_code = post_data(uri=file_path, msg_body=self.msg_body,
                                     file_extension=file_extention, content_type=self.req_headers_general["Content-Type"])
             print("out of post_data()")
-            response = self.add_res_headers(response)
-            response += "\r\n" + "POST Successful"
-            self.print_res_headers(response)
-            return response.encode()
+
+            if status_code in [400, 403, 500]:
+                response = "{} {} {}\r\n".format(str(http_version), status_code,
+                                                 STATUS_CODES[status_code])  # Status line
+                self.res_headers['Status'] = status_code
+                response = self.add_res_headers(response)
+                if status_code == 400:
+                    response += "\r\n Bad Request Format"
+                elif status_code == 403:
+                    response += "\r\n Forbidden"
+                elif status_code == 500:
+                    response += "\r\n Server Error"
+
+                self.print_res_headers(response)
+                return response.encode()
+            if status_code in [200]:
+                response = self.add_res_headers(response)
+                self.print_res_headers(response)
+                response += "\r\n" + "POST Successful"
+                return response.encode()
 
         elif method == "PUT":
             file_path, file_extention, status_code = self.resolve_uri(URI)
-            # print("Calling manage_data.put_data")
-            status_code = manage_data.put_data(uri=file_path, msg_body=self.msg_body, file_extension=file_extention,
-                                               content_type=self.req_headers_general["Content-Type"])
-            # print("Out of manage_data.put_data")
+            print("Calling manage_data.put_data")
+            status_code, resource_uri = manage_data.put_data(uri=file_path, msg_body=self.msg_body, file_extension=file_extention,
+                                                             content_type=self.req_headers_general["Content-Type"])
+            print("Out of manage_data.put_data")
+
+            if status_code in [400, 404]:
+                response = "{} {} {}\r\n".format(str(http_version), status_code,
+                                                 STATUS_CODES[status_code])  # Status line
+
+                if status_code == 404:
+                    self.res_body = "\r\nDirectory Does not exist"
+                elif status_code == 400:
+                    self.res_body = "\r\nBad Request"
+                self.res_headers['Status'] = status_code
+                self.res_headers["Content-Length"] = len(self.res_body)
+                response = self.add_res_headers(response)
+                response += self.res_body
+                self.print_res_headers(response)
+                return response.encode()
+
             # print("method : PUT: ", file_path, file_extention, status_code)
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              STATUS_CODES[status_code])  # Status line
 
             if status_code == 200:
-                self.res_body = "PUT OKAY\r\n"
+                self.res_body = "PUT OKAY"
             elif status_code == 201:
-                self.res_body = "File Created\r\n"
+                self.res_body = "File Created"
+                self.res_headers['Location'] = os.path.relpath(
+                    path=resource_uri, start=documnetRoot)
+
             self.res_headers['Status'] = status_code
             self.res_headers["Content-Length"] = len(self.res_body)
             response = self.add_res_headers(response)
-            # self.print_res_headers(response)
-            response += "\r\n" + self.msg_body
+            response += "\r\n" + self.res_body
+            self.print_res_headers(response)
             return response.encode()
 
         elif method == "DELETE":
@@ -429,13 +522,14 @@ class Parser:
                 self.res_body = STATUS_CODES[status_code]
                 self.res_headers["Content-Length"] = len(self.msg_body)
                 response = self.add_res_headers(response)
+                self.print_res_headers(response)
                 response += "\r\n" + self.res_body
                 return response.encode()
 
-            # print("Calling delete_data()")
+            print("Calling delete_data()")
             status_code = manage_data.delete_data(
                 uri=file_path, file_extension=file_extention, queries=self.queries)
-            # print("After delete_data(): status_code: ", status_code)
+            print("After delete_data(): status_code: ", status_code)
 
             reason_phrase = STATUS_CODES[status_code]
             self.res_headers['Status'] = status_code
@@ -443,6 +537,8 @@ class Parser:
                                              reason_phrase)  # Status line
             if status_code == 200:
                 self.res_body = "File Successfully Removed\n"
+            elif status_code == 403:
+                self.res_body = "Forbidden\n"
             elif status_code == 400:
                 self.res_body = "Do not give query strings for DELETE request for html, jpeg, png, jpg files\n"
             elif status_code == 500:
@@ -452,7 +548,7 @@ class Parser:
             response = self.add_res_headers(response)
             response += "\r\n" + self.res_body
             # print("Response : ")
-            # self.print_res_headers(response)
+            self.print_res_headers(response)
             return response.encode()
 
         else:

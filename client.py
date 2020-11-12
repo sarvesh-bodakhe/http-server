@@ -165,7 +165,7 @@ if __name__ == "__main__":
     # #     print(result)
 
     # global req_no
-    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
         # Start the load operations and mark each future with its URL
         future_to_url = {executor.submit(
             send_request_fun, req): req for req in req_list}
