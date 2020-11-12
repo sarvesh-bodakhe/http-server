@@ -30,6 +30,8 @@ documnetRoot = documnetRoot.strip("'")
 threads = []
 # PORT = int(sys.argv[1])
 PORT = int(config['DEFAULT']['port'])
+if len(sys.argv) > 1:
+    PORT = int(sys.argv[1])
 logDir = config['LOG']['logDirectory']
 logDir = logDir.strip("'")
 max_thread_count = 0
