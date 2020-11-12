@@ -19,16 +19,17 @@ dict_extensions = {
 def display_file():
     fp = open("src/data/data_file1.json", "r")
     data = json.load(fp)
+    fp.close()
     print(data)
 
 
 def delete_data(uri, file_extension=None, queries=None):
-    print("In delete_data")
-    print("uri: ", uri, " Query: ", queries, " extension: ", file_extension)
+    # print("In delete_data")
+    # print("uri: ", uri, " Query: ", queries, " extension: ", file_extension)
     uri = os.path.join(documnetRoot, uri)
-    print(uri)
+    # print(uri)
     if os.path.exists(uri):
-        print("file exits")
+        # print("file exits")
         if file_extension == "json":
             if len(queries) == 0:
                 """  Delete Complete file  """
@@ -47,7 +48,7 @@ def delete_data(uri, file_extension=None, queries=None):
                     obj_list = json.load(file_obj)
                     file_obj.close()
                     for obj in obj_list:
-                        print("obj: ", obj)
+                        # print("obj: ", obj)
                         flag = 1
                         for attr in queries:
                             # print("attr: ", attr, "Value: ", queries[attr])
@@ -57,10 +58,10 @@ def delete_data(uri, file_extension=None, queries=None):
                                 flag = 0
                                 # obj_list.remove(obj)
                         if flag == 1:
-                            print("object found")
+                            # print("object found")
                             obj_list.remove(obj)
 
-                    print("SuccessFully removed")
+                    # print("SuccessFully removed")
                     file_obj = open(uri, "w")
                     json.dump(obj_list, file_obj)
                     file_obj.close()
@@ -112,8 +113,7 @@ def delete_data(uri, file_extension=None, queries=None):
 
 
 def put_data(uri, msg_body, file_extension, content_type):
-    print("in put_data : uri: ", uri, " file_extension: ",
-          file_extension, " Content-type: ", content_type)
+    # print("in put_data : uri: ", uri, " file_extension: ",file_extension, " Content-type: ", content_type)
     # uri = uri.strip('/')
     global put_file_count
     if os.path.isdir(uri):
@@ -121,7 +121,7 @@ def put_data(uri, msg_body, file_extension, content_type):
         put_file_count += 1
         file_name = "file_" + str(put_file_count) + \
             "." + dict_extensions[content_type]
-        print("file name create:{}".format(file_name))
+        # print("file name create:{}".format(file_name))
         file_path = os.path.join(uri, file_name)
 
         if content_type in ['text/plain']:
@@ -143,7 +143,7 @@ def put_data(uri, msg_body, file_extension, content_type):
         file_obj.close()
         return (200, file_path)
     else:
-        print("else in put_daata")
+        # print("else in put_daata")
         return(404, uri)
     # if os.path.exists(uri):
     #     """
@@ -166,15 +166,14 @@ def put_data(uri, msg_body, file_extension, content_type):
 
 
 def post_data(uri, msg_body, file_extension, content_type):
-    print("in post_data : uri: ", uri,  " file_extension: ",
-          file_extension, " Content-type: ", content_type)
+    # print("in post_data : uri: ", uri,  " file_extension: ",file_extension, " Content-type: ", content_type)
     # print("msg_body: ")
     # print(msg_body)
     # uri = uri.strip('/')
-    if os.path.exists(uri):
-        print("File exits")
-    else:
-        print("File does not exits. Creating file...")
+    # if os.path.exists(uri):
+    # print("File exits")
+    # else:
+    # print("File does not exits. Creating file...")
 
     if content_type == "application/x-www-form-urlencoded":
 
@@ -202,9 +201,10 @@ def post_data(uri, msg_body, file_extension, content_type):
         if os.path.exists(uri):
             if os.access(path=uri, mode=os.R_OK):
                 fp = open(uri, "r")
+                obj_list = json.load(fp)
+                fp.close()
             else:
                 return 403
-            obj_list = json.load(fp)
         else:
             obj_list = []
 
@@ -219,6 +219,7 @@ def post_data(uri, msg_body, file_extension, content_type):
             fp = open(uri, "w")
 
         json.dump(obj_list, fp)
+        fp.close()
         return 200
 
     elif content_type.find("multipart/form-data") != -1:
@@ -265,7 +266,7 @@ def post_data(uri, msg_body, file_extension, content_type):
 
             info_dict['Content-Disposition'] = info[0].split(':')[1].strip()
             info_dict['name'] = info[1].split('=')[1].strip('"')
-            print("name: ", info_dict['name'])
+            # print("name: ", info_dict['name'])
             try:
                 path_to_postDir = os.path.join(
                     documnetRoot, "data", "postedFiles")
@@ -280,36 +281,34 @@ def post_data(uri, msg_body, file_extension, content_type):
                 temp_dict['fileuri'] = os.path.relpath(
                     path=file_path, start=documnetRoot)
                 # print("file to create:", file_path)
-                print(
-                    "filename:{} content-type:{}".format(info_dict['filename'], info_dict['Content-Type']))
+                # print("filename:{} content-type:{}".format(info_dict['filename'], info_dict['Content-Type']))
 
                 extenstion_of_file = info_dict['filename'].split('.')[1]
                 # if extenstion_of_file in ['jpeg', 'png', 'jpg']:
                 if info_dict['Content-Type'] in ["image/jpeg", "image/jpg"] or extenstion_of_file in ['jpeg', 'png', 'jpg']:
-                    print("image is of type jpg, jpeg, png - Binary")
+                    # print("image is of type jpg, jpeg, png - Binary")
 
                     if os.access(path=file_path, mode=os.F_OK):
                         if os.access(path=file_path, mode=os.W_OK):
-                            print("file already exits. and have write access")
-                            print("filepath:{}".format(file_path))
+                            # print("file already exits. and have write access")
+                            # print("filepath:{}".format(file_path))
                             try:
                                 file_obj = open(file_path, "wb")
                                 file_obj.write(value.encode('iso-8859-1'))
-                                print("image written in file")
+                                # print("image written in file")
                                 file_obj.close()
                             except:
-                                print("internal server error")
+                                # print("internal server error")
                                 return 500
                         else:
-                            print(
-                                "file already exits. but dont have write access. 403")
+                            # print("file already exits. but dont have write access. 403")
                             return 403
                     else:
-                        print("file do not exits")
-                        print("filepath:{}".format(file_path))
+                        # print("file do not exits")
+                        # print("filepath:{}".format(file_path))
                         file_obj = open(file_path, "wb")
                         file_obj.write(value.encode('iso-8859-1'))
-                        print("image written in file")
+                        # print("image written in file")
                         file_obj.close()
 
                     # try:
@@ -328,29 +327,29 @@ def post_data(uri, msg_body, file_extension, content_type):
                     # except:
                     #     print("Unable to open ", file_path)
                 elif extenstion_of_file in ['txt', 'csv', 'js', 'html']:
-                    print("file is of type txt, csv, html, js- Non Binary")
+                    # print("file is of type txt, csv, html, js- Non Binary")
                     if os.access(path=file_path, mode=os.F_OK):
                         if os.access(path=file_path, mode=os.W_OK):
                             # print("file already exits. and have write access")
-                            print("filepath:{}".format(file_path))
+                            # print("filepath:{}".format(file_path))
                             try:
                                 file_obj = open(file_path, "wb")
                                 file_obj.write(value.encode('iso-8859-1'))
-                                print("image written in file")
+                                # print("image written in file")
                                 file_obj.close()
                             except:
-                                print("internal server error")
+                                # print("internal server error")
                                 return 500
                         else:
                             print(
                                 "file already exits. but dont have write access. 403")
                             return 403
                     else:
-                        print("file do not exits")
-                        print("filepath:{}".format(file_path))
+                        # print("file do not exits")
+                        # print("filepath:{}".format(file_path))
                         file_obj = open(file_path, "wb")
                         file_obj.write(value.encode('iso-8859-1'))
-                        print("image written in file")
+                        # print("image written in file")
                         file_obj.close()
 
                     # try:
@@ -442,6 +441,7 @@ def get_data(file_path, file_extension=None, queries=None):
     if file_extension in ["ico", "jpeg", "jpg"]:
         file_obj = open(file_path, 'rb')
         image_raw = file_obj.read()
+        file_obj.close()
         return (get_modification_time(file_path), image_raw)
 
     elif file_extension in ["html", "json", "js"]:
@@ -449,17 +449,23 @@ def get_data(file_path, file_extension=None, queries=None):
             file_obj = open(file_path, "r")
             # obj_list is list of objects (json)
             obj_list = json.load(file_obj)
+            file_obj.close()
             to_return = []
             for obj in obj_list:
                 # print("obj: ", obj)
+                flag = 1
                 for attr in queries:
                     # print("attr: ", attr, "Value: ", queries[attr])
                     # print("obj[attr]: ", obj[attr])
-                    if str(obj[attr]) == str(queries[attr]):
+                    if str(obj[attr]) != str(queries[attr]):
                         # print("found")
-                        return (None, json.dumps(obj))
+                        flag = 0
+                if flag == 1:
+                    # print("Object Found")
+                    return (None, json.dumps(obj))
             return (None, "No Data Available")
-
-        file_obj = open(file_path, "r")
-        text_data = file_obj.read()
-        return (get_modification_time(file_path), text_data)
+        else:
+            file_obj = open(file_path, "r")
+            text_data = file_obj.read()
+            file_obj.close()
+            return (get_modification_time(file_path), text_data)

@@ -1,0 +1,107 @@
+[
+    {
+        "method": "GET",
+        "description": "Simple GET Request for index.html",
+        "body": "GET / HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:06:48 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client code\r\n\r\n"
+    },
+    {
+        "method": "GET",
+        "description": "GET Request for form.html (form.html is present)",
+        "body": "GET /form.html HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:08:09 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client code\r\n\r\n"
+    },
+    {
+        "method": "GET",
+        "description": "GET request for faulty uri which is not available",
+        "body": "GET /faulty-url.html HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:08:52 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "GET",
+        "description": "GET Request for json file which stores list of students",
+        "body": "GET /data/data_file1.json HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:17:18 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "GET",
+        "description": "GET Request with Query string parameters",
+        "body": "GET /data/data_file1.json?MIS=111803149&Name=Sarvesh HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:18:53 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "GET",
+        "description": "GET Request with Faulty Query string parameters",
+        "body": "GET /data/data_file1.json?Name=random-name HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:19:52 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "GET",
+        "description": "Get Request for Binary file (Image in this case)",
+        "body": "GET /images/image_server_01.jpeg HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:26:16 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "GET",
+        "description": "Get request to demostrate conditional GET (if-modified since)",
+        "body": "GET / HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:29:31 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\nIf-Modified-Since: Thu, 12 Nov 2020 20:20:53 GMT\r\n\r\n"
+    },
+    {
+        "method": "HEAD",
+        "description": "Simple HEAD Request for index.html",
+        "body": "HEAD / HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:06:48 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client code\r\n\r\n"
+    },
+    {
+        "method": "HEAD",
+        "description": "HEAD Request for form.html (form.html is present)",
+        "body": "HEAD /form.html HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:08:09 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client code\r\n\r\n"
+    },
+    {
+        "method": "HEAD",
+        "description": "HEAD request for faulty uri which is not available",
+        "body": "HEAD /faulty-url.html HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:08:52 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "HEAD",
+        "description": "HEAD Request for json file which stores list of students",
+        "body": "HEAD /data/data_file1.json HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:17:18 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "HEAD",
+        "description": "HEAD Request with Query string parameters",
+        "body": "HEAD /data/data_file1.json?MIS=111803149&Name=Sarvesh HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:18:53 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "HEAD",
+        "description": "HEAD Request with Faulty Query string parameters",
+        "body": "HEAD /data/data_file1.json?Name=random-name HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:19:52 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "HEAD",
+        "description": "HEAD Request for Binary file (Image in this case)",
+        "body": "HEAD /images/image_server_01.jpeg HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:26:16 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "HEAD",
+        "description": "HEAD request to demostrate conditional HEAD (if-modified since)",
+        "body": "HEAD / HTTP/1.1\r\nDate: Thu, 12 Nov 2020 15:29:31 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\nIf-Modified-Since: Thu, 12 Nov 2020 20:20:53 GMT\r\n\r\n"
+    },
+    {
+        "method": "POST",
+        "description": "POST request for valid json file with encoding x-www-urlenocded",
+        "body": "POST /data/data_file1.json HTTP/1.1\r\nDate: Thu, 12 Nov 2020 16:14:50 GMT\r\nConnection: close\r\nContent-Type: application/x-www-form-urlencoded\r\nUserAgent: Sarvesh's client\r\nContent-Length: 48\r\n\r\nName=XYZ&Year=2020&Branch=Computer&MIS=111803149"
+    },
+    {
+        "method": "DELETE",
+        "description": "DELETE request with query string to delete object having given attributes. Valid Credentials- Basic Authorisation",
+        "body": "DELETE /data/data_file1.json?MIS=111803149 HTTP/1.1\r\nDate: Thu, 12 Nov 2020 16:38:26 GMT\r\nAuthorization: Basic U2FydmVzaDoxMjM=\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "DELETE",
+        "description": "DELETE request with query string where no object has given queried attributes. No Authorisation",
+        "body": "DELETE /data/data_file1.json?Name=ABCasdds HTTP/1.1\r\nDate: Thu, 12 Nov 2020 16:38:26 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "DELETE",
+        "description": "DELETE request for file .Invalid Credentials.No Authorisation",
+        "body": "DELETE /data/temp.txt HTTP/1.1\r\nDate: Thu, 12 Nov 2020 16:38:26 GMT\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    },
+    {
+        "method": "DELETE",
+        "description": "DELETE request for file . Valid Credentials. ",
+        "body": "DELETE /data/temp.txt HTTP/1.1\r\nDate: Thu, 12 Nov 2020 16:38:26 GMT\r\nAuthorization: Basic U2FydmVzaDoxMjM=\r\nConnection: close\r\nUserAgent: Sarvesh's client\r\n\r\n"
+    }
+]

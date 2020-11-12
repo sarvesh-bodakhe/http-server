@@ -1,0 +1,11 @@
+ web server is server software, or hardware dedicated to running this software, that can satisfy client
+            requests on the
+            World Wide Web. A web server can, in general, contain one or more websites. A web server processes incoming
+            network
+            requests over HTTP and several other related protocols.
+
+            The primary function of a web server is to store, process and deliver web pages to clients.[1] The
+            communication between
+            client and server takes place using the Hypertext Transfer Protocol (HTTP). Pages delivered are most
+            frequently HTML
+            documents, which may include images, style sheets and scripts in addition to the text content.

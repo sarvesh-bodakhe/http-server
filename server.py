@@ -13,20 +13,24 @@ import mimetypes
 import base64
 from configparser import ConfigParser
 
+Server = None
+START = None
+PAUSE = None
+
 config = ConfigParser()
 config.read('config.ini')
 
-admin_username = "Sarvesh"
-admin_password = "123"
-# documnetRoot = 'src'
-documnetRoot = config['SERVER']['documentRoot']
+admin_username = config['ADMIN']['username']
+admin_username = admin_username.strip('"')
+admin_password = config['ADMIN']['password']
+admin_password = admin_password.strip('"')
+
+documnetRoot = config['PATH']['documentRoot']
 documnetRoot = documnetRoot.strip("'")
-# print(documnetRoot.strip("'"))
-print(os.getcwd())
 threads = []
-PORT = int(sys.argv[1])
-# PORT = int(config['SERVER']['port'])
-logDir = config['SERVER']['logDirectory']
+# PORT = int(sys.argv[1])
+PORT = int(config['DEFAULT']['port'])
+logDir = config['LOG']['logDirectory']
 logDir = logDir.strip("'")
 max_thread_count = 0
 STATUS_CODES = {
@@ -76,7 +80,8 @@ class Parser:
             "Request URL": None,
             "User-Agent": None,
             "Cookie": None,
-            "If-Modified-Since": None
+            "If-Modified-Since": None,
+            "Authorization": None
         }
         self.respnose = None
         self.res_headers = {
@@ -110,19 +115,10 @@ class Parser:
             self.res_headers['Status'] = 400
             return
 
-        print("in extract_msg: msg: ")
-        count = 1
-        # for i in msg:
-        #     print(count, i)
-        #     count += 1
+        # print("in extract_msg: msg: ")
         self.headers = msg[0]
         if len(msg) >= 2:  # if len=2: request contains both headers and body
             self.msg_body = msg[1]
-
-        # if self.msg_body:
-        #     print("in extract_msg: len(self.msg_body):  ", len(self.msg_body))
-        # else:
-        #     print("in extract_msg:request body is empty")
         return
 
     def extract_headers(self):
@@ -155,7 +151,7 @@ class Parser:
         # print("in extract_headers => self.queries : ", self.queries)
         self.headers = self.headers[1:]
         for key_value in self.headers:
-            attr, value = key_value.split(': ')
+            attr, value = key_value.split(': ', 1)
             self.req_headers_general[attr] = value
 
     def print_headers(self):
@@ -236,7 +232,7 @@ class Parser:
                 return (path, file_extention, 404)
 
         if method == "POST":
-            print("resolve uri post. uri:{}".format(uri))
+            # print("resolve uri post. uri:{}".format(uri))
             if uri == "/data":
                 # path = "src/data/data_file1.json"
                 path = os.path.join(documnetRoot, "data", "data_file1.json")
@@ -250,10 +246,10 @@ class Parser:
                 file_extention = uri.split('.')[1]
             except:
                 file_extention = None
-            print("doctumetRoot:{}".format(documnetRoot))
+            # print("doctumetRoot:{}".format(documnetRoot))
             path = os.path.join(documnetRoot, uri)
-            print("path:", path)
-            print("path calculated:{}".format(path))
+            # print("path:", path)
+            # print("path calculated:{}".format(path))
             if os.access(path=path, mode=os.F_OK):
                 if os.access(path, os.W_OK):
                     return (path, file_extention, 200)
@@ -292,27 +288,28 @@ class Parser:
 
             global admin_username, admin_password
             if self.req_headers_general['Authorization']:
-                userpass = self.req_headers_general['Authorization'].split(" ")[
+                auth = self.req_headers_general['Authorization'].split(" ")[
                     1].encode()
-                userpass = base64.decodebytes(
-                    userpass).decode().split(':')
-                print("userpass: ", userpass)
-                username = str(userpass[0])
-                password = str(userpass[1])
-                print("username, password")
-                print(username, password)
+                auth = base64.decodebytes(
+                    auth).decode().split(':')
+                # print("auth: ", auth)
+                username = str(auth[0])
+                password = str(auth[1])
+                # print(admin_username, admin_password)
+                # print("username, password")
+                # print(username, password)
             else:
-                print("Authorisation required")
+                # print("Authorisation required")
                 return (path, file_extention, 401)
 
             if os.path.isfile(path):
                 if os.access(path=path, mode=os.W_OK):
-                    print(admin_username, admin_password, username, password)
-                    if (username == admin_username and password == admin_password):
-                        print("Authorized")
+                    # print(admin_username, admin_password, username, password)
+                    if (str(username) == str(admin_username) and str(password) == str(admin_password)):
+                        # print("Authorized")
                         return (path, file_extention, 200)
                     else:
-                        print("Not Authorized")
+                        # print("Not Authorized")
                         return (path, file_extention, 401)
                 else:
                     return(path, file_extention, 403)
@@ -331,7 +328,7 @@ class Parser:
                 "MIS": 1118031489
             }
         if self.res_headers['Status'] == 400:
-            response = "{} {} {}\r\n".format(str(http_version), 400,
+            response = "{} {} {}\r\n".format("HTTP/1.1", 400,
                                              STATUS_CODES[400])  # Status line
             response = self.add_res_headers(response)
             response += "\r\n400 Bad Request"
@@ -369,7 +366,7 @@ class Parser:
             # i.e  404 Not Found, 403 Forbidden
             if status_code != 200:
                 response = self.add_res_headers(response)
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 if status_code == 404:
                     if method == "GET":
                         response += "\r\n" + "404 Page Not Found\r\n"
@@ -396,7 +393,7 @@ class Parser:
                                                      STATUS_CODES[status_code])  # Status line
                     response = self.add_res_headers(response)
                     response += "\r\n"
-                    self.print_res_headers(response)
+                    # self.print_res_headers(response)
                     return response.encode()
 
                 # print(" modified image")
@@ -409,7 +406,7 @@ class Parser:
 
                 response = self.add_res_headers(response)
                 response.strip()
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 response += "\r\n"
 
                 # encode headers (text); do not encode image_raw as it is binary
@@ -427,17 +424,18 @@ class Parser:
 
                 self.res_headers['Last-Modified'], self.res_body = get_data(
                     file_path=file_path, file_extension=file_extention, queries=self.queries)
-
-                if self.res_headers['Last-Modified'] == self.req_headers_general['If-Modified-Since']:
+                # print("self.res_body: ", self.res_body)
+                if self.res_headers['Last-Modified'] and self.res_headers['Last-Modified'] == self.req_headers_general['If-Modified-Since']:
                     status_code = 304
                     self.res_headers['Status'] = status_code
                     response = "{} {} {}\r\n".format(str(http_version), status_code,
                                                      STATUS_CODES[status_code])  # Status line
                     response = self.add_res_headers(response)
                     response += "\r\n"
-                    self.print_res_headers(response)
+                    # self.print_res_headers(response)
                     return response.encode()
                 ###
+
                 if self.res_body:
                     # self.res_headers["Content-type"] = CONTENT_TYPE[file_extention]
                     self.res_headers["Content-type"] = mimetypes.guess_type(
@@ -447,12 +445,13 @@ class Parser:
 
                 # print("Adding headers by add_res_headers")
                 response = self.add_res_headers(response)
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 if method == "GET":
                     if self.res_body:
-                        response += "\r\n" + self.res_body + "\r\n"
+                        response += "\r\n" + self.res_body
                 elif method == "HEAD":
                     response += "\r\n"
+                self.print_res_headers(response)
                 response = response.encode()
                 # encode whole response(headers+body) as everything is textual
                 return response
@@ -468,22 +467,22 @@ class Parser:
 
         # method other than GET
         elif method == "POST":
-            print("in Create_response(): method: POST")
+            # print("in Create_response(): method: POST")
             file_path, file_extention, status_code = self.resolve_uri(URI)
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              STATUS_CODES[status_code])  # Status line
             self.res_headers['Status'] = status_code
 
             if status_code in [403]:
-                print("resolve uri returned 403")
+                # print("resolve uri returned 403")
                 response += "\r\n Forbidden"
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 return response.encode()
 
-            print("calling post_data()")
+            # print("calling post_data()")
             status_code = post_data(uri=file_path, msg_body=self.msg_body,
                                     file_extension=file_extention, content_type=self.req_headers_general["Content-Type"])
-            print("out of post_data()")
+            # print("out of post_data()")
 
             if status_code in [400, 403, 500]:
                 response = "{} {} {}\r\n".format(str(http_version), status_code,
@@ -497,20 +496,20 @@ class Parser:
                 elif status_code == 500:
                     response += "\r\n Server Error"
 
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 return response.encode()
             if status_code in [200]:
                 response = self.add_res_headers(response)
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 response += "\r\n" + "POST Successful"
                 return response.encode()
 
         elif method == "PUT":
             file_path, file_extention, status_code = self.resolve_uri(URI)
-            print("Calling manage_data.put_data")
+            # print("Calling manage_data.put_data")
             status_code, resource_uri = manage_data.put_data(uri=file_path, msg_body=self.msg_body, file_extension=file_extention,
                                                              content_type=self.req_headers_general["Content-Type"])
-            print("Out of manage_data.put_data")
+            # print("Out of manage_data.put_data")
 
             if status_code in [400, 404]:
                 response = "{} {} {}\r\n".format(str(http_version), status_code,
@@ -524,7 +523,7 @@ class Parser:
                 self.res_headers["Content-Length"] = len(self.res_body)
                 response = self.add_res_headers(response)
                 response += self.res_body
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 return response.encode()
 
             # print("method : PUT: ", file_path, file_extention, status_code)
@@ -542,7 +541,7 @@ class Parser:
             self.res_headers["Content-Length"] = len(self.res_body)
             response = self.add_res_headers(response)
             response += "\r\n" + self.res_body
-            self.print_res_headers(response)
+            # self.print_res_headers(response)
             return response.encode()
 
         elif method == "DELETE":
@@ -556,13 +555,13 @@ class Parser:
                 # self.res_headers["Content-Length"] = len(self.msg_body)
                 response = self.add_res_headers(response)
                 response += "\r\n"
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 return response.encode()
 
-            print("Calling delete_data()")
+            # print("Calling delete_data()")
             status_code = manage_data.delete_data(
                 uri=file_path, file_extension=file_extention, queries=self.queries)
-            print("After delete_data(): status_code: ", status_code)
+            # print("After delete_data(): status_code: ", status_code)
 
             reason_phrase = STATUS_CODES[status_code]
             self.res_headers['Status'] = status_code
@@ -581,7 +580,7 @@ class Parser:
             response = self.add_res_headers(response)
             response += "\r\n" + self.res_body
             # print("Response : ")
-            self.print_res_headers(response)
+            # self.print_res_headers(response)
             return response.encode()
 
         else:
@@ -632,14 +631,9 @@ class ClientThread(threading.Thread, Parser):
         """
             If msg is None... For now sendd 400
         """
-        if msg == None:
-            self.res_headers['Status'] = 400
-            self.process_query()
-            self.client_socket.close()
-
-        print("****************************  Request msg: Start  ********************")
-        print(msg)
-        print("*****************************   Request msg: end   ********************\n")
+        # print("****************************  Request msg: Start  ********************")
+        # print(msg)
+        # print("*****************************   Request msg: end   ********************\n")
         self.extract_msg(msg)
         if self.res_headers['Status'] == 400:
             self.process_query()
@@ -648,14 +642,18 @@ class ClientThread(threading.Thread, Parser):
         # print(self.headers)
         # print("************************   Request Headers: end   ********************\n")
         self.extract_headers()
-        # if self.res_headers['Status'] == 400: #400 Bad Request
-        self.process_query()
-        self.client_socket.close()
         request_line = self.req_headers_general['method'] + " " + \
             self.req_headers_general['uri'] + " " + \
             self.req_headers_general['protocol']
-        log.access_log(status_code=self.res_headers["Status"], size=self.res_headers["Content-Length"], request_line=request_line,
-                       client_ip=self.ip, user_agent=self.req_headers_general['User-Agent'], logDir=logDir)
+        try:
+            self.process_query()
+            self.client_socket.close()
+            log.access_log(status_code=self.res_headers["Status"], size=self.res_headers["Content-Length"], request_line=request_line,
+                           client_ip=self.ip, user_agent=self.req_headers_general['User-Agent'], logDir=logDir)
+        except:
+            self.client_socket.close()
+            log.error_log(status_code=500, size=len("Server Error"), request_line=request_line,
+                          client_ip=self.ip, user_agent=self.req_headers_general['User-Agent'], logDir=logDir)
         # print_linebreak()
 
     def process_query(self):
@@ -674,9 +672,6 @@ if __name__ == "__main__":
     while True:
         (client_socket, (ip, port)) = http_server.server_socket.accept()
         newClientThread = ClientThread(ip, port, client_socket)
-        # threads.append(newClientThread)
-        # print("total sockets: " + str(len(threads)) + "\tcount: " +
-        #       str(threading.active_count()))
         newClientThread.start()
 
     for t in threads:
