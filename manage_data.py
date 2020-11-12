@@ -115,18 +115,26 @@ def put_data(uri, msg_body, file_extension, content_type):
     print("in put_data : uri: ", uri, " file_extension: ",
           file_extension, " Content-type: ", content_type)
     # uri = uri.strip('/')
-
+    global put_file_count
     if os.path.isdir(uri):
-        global put_file_count
+
         put_file_count += 1
         file_name = "file_" + str(put_file_count) + \
             "." + dict_extensions[content_type]
         print("file name create:{}".format(file_name))
         file_path = os.path.join(uri, file_name)
-        file_obj = open(file=file_path, mode="w")
-        file_obj.write(msg_body)
-        file_obj.close()
-        return (201, file_path)
+
+        if content_type in ['text/plain']:
+            file_obj = open(file=file_path, mode="w")
+            file_obj.write(msg_body)
+            file_obj.close()
+            return (201, file_path)
+        #  content_type in ['image/png', 'image/jpeg', 'image/jpg']:
+        else:
+            file_obj = open(file=file_path, mode="wb")
+            file_obj.write(msg_body.encode('iso-8859-1'))
+            file_obj.close()
+            return (201, file_path)
 
     elif os.path.isfile(uri):
         file_path = uri

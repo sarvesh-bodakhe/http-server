@@ -10,11 +10,14 @@ import zlib
 import manage_data
 import log
 import mimetypes
+import base64
 from configparser import ConfigParser
 
 config = ConfigParser()
 config.read('config.ini')
 
+admin_username = "Sarvesh"
+admin_password = "123"
 # documnetRoot = 'src'
 documnetRoot = config['SERVER']['documentRoot']
 documnetRoot = documnetRoot.strip("'")
@@ -33,6 +36,7 @@ STATUS_CODES = {
     300: 'Redirection',
     304: 'Not Modified',
     400: 'Bad Request',
+    401: "Unauthorized",
     403: 'Forbidden',
     404: 'Not Found',
     500: 'Server-Error',
@@ -100,7 +104,12 @@ class Parser:
         return msg.split('\r\n, ')
 
     def extract_msg(self, msg):
-        msg = msg.split('\r\n\r\n', 1)
+        try:
+            msg = msg.split('\r\n\r\n', 1)
+        except:
+            self.res_headers['Status'] = 400
+            return
+
         print("in extract_msg: msg: ")
         count = 1
         # for i in msg:
@@ -278,9 +287,33 @@ class Parser:
             except:
                 file_extention = None
             path = os.path.join(documnetRoot, uri)
+            if os.path.isdir(uri):
+                return(path, file_extention, 403)
+
+            global admin_username, admin_password
+            if self.req_headers_general['Authorization']:
+                userpass = self.req_headers_general['Authorization'].split(" ")[
+                    1].encode()
+                userpass = base64.decodebytes(
+                    userpass).decode().split(':')
+                print("userpass: ", userpass)
+                username = str(userpass[0])
+                password = str(userpass[1])
+                print("username, password")
+                print(username, password)
+            else:
+                print("Authorisation required")
+                return (path, file_extention, 401)
+
             if os.path.isfile(path):
                 if os.access(path=path, mode=os.W_OK):
-                    return(path, file_extention, 200)
+                    print(admin_username, admin_password, username, password)
+                    if (username == admin_username and password == admin_password):
+                        print("Authorized")
+                        return (path, file_extention, 200)
+                    else:
+                        print("Not Authorized")
+                        return (path, file_extention, 401)
                 else:
                     return(path, file_extention, 403)
             else:
@@ -297,6 +330,13 @@ class Parser:
                 "Name": "Sarvesh",
                 "MIS": 1118031489
             }
+        if self.res_headers['Status'] == 400:
+            response = "{} {} {}\r\n".format(str(http_version), 400,
+                                             STATUS_CODES[400])  # Status line
+            response = self.add_res_headers(response)
+            response += "\r\n400 Bad Request"
+            # self.print_res_headers(response)
+            return response.encode()
 
         method, URI, http_version = self.req_headers_general[
             'method'], self.req_headers_general[
@@ -314,13 +354,6 @@ class Parser:
 
         # Check if the request format is valid. If valid Move Further
         # Else return 400 response
-        if self.res_headers['Status'] == 400:
-            response = "{} {} {}\r\n".format(str(http_version), 400,
-                                             STATUS_CODES[400])  # Status line
-            response = self.add_res_headers(response)
-            response += "\r\n400 Bad Request\r\n"
-            # self.print_res_headers(response)
-            return response.encode()
 
         # file_path, file_extention, status_code = self.resolve_uri(URI)
         # reason_phrase = STATUS_CODES[status_code]
@@ -520,10 +553,10 @@ class Parser:
                 response = "{} {} {}\r\n".format(str(http_version), status_code,
                                                  STATUS_CODES[status_code])  # Status line
                 self.res_body = STATUS_CODES[status_code]
-                self.res_headers["Content-Length"] = len(self.msg_body)
+                # self.res_headers["Content-Length"] = len(self.msg_body)
                 response = self.add_res_headers(response)
+                response += "\r\n"
                 self.print_res_headers(response)
-                response += "\r\n" + self.res_body
                 return response.encode()
 
             print("Calling delete_data()")
@@ -536,13 +569,13 @@ class Parser:
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              reason_phrase)  # Status line
             if status_code == 200:
-                self.res_body = "File Successfully Removed\n"
+                self.res_body = "File Successfully Removed"
             elif status_code == 403:
-                self.res_body = "Forbidden\n"
+                self.res_body = "Forbidden"
             elif status_code == 400:
-                self.res_body = "Do not give query strings for DELETE request for html, jpeg, png, jpg files\n"
+                self.res_body = "Do not give query strings for DELETE request for html, jpeg, png, jpg files"
             elif status_code == 500:
-                self.res_body = "Internal Server Error\n"
+                self.res_body = "Internal Server Error"
 
             self.res_headers["Content-Length"] = len(self.msg_body)
             response = self.add_res_headers(response)
@@ -604,13 +637,16 @@ class ClientThread(threading.Thread, Parser):
             self.process_query()
             self.client_socket.close()
 
-        # print("****************************  Request msg: Start  ********************")
-        # print(msg)
-        # print("*****************************   Request msg: end   ********************\n")
+        print("****************************  Request msg: Start  ********************")
+        print(msg)
+        print("*****************************   Request msg: end   ********************\n")
         self.extract_msg(msg)
-        print("****************************  Request Headers: Start  ********************")
-        print(self.headers)
-        print("************************   Request Headers: end   ********************\n")
+        if self.res_headers['Status'] == 400:
+            self.process_query()
+            self.client_socket.close()
+        # print("****************************  Request Headers: Start  ********************")
+        # print(self.headers)
+        # print("************************   Request Headers: end   ********************\n")
         self.extract_headers()
         # if self.res_headers['Status'] == 400: #400 Bad Request
         self.process_query()
