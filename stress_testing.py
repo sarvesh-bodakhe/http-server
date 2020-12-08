@@ -40,13 +40,14 @@ if __name__ == "__main__":
         temp = i['body']
         main_list.append(temp)
 
-    print("requests count: {}".format(len(main_list)))
+    # print("requests count: {}".format(len(main_list)))
     start_time = time.time()
 
     start_time = time.time()
-    num = int(input("Enter how many requests to send: "))
+    num = int(
+        input("Enter how many requests to send:(< {}): ".format(len(obj_list))))
     req_list = main_list[:num]
-    with concurrent.futures.ThreadPoolExecutor(max_workers=15) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
         # Start the load operations and mark each future with its URL
         future_to_url = {executor.submit(
             send_request_fun, req): req for req in req_list}

@@ -115,12 +115,12 @@ def delete_data(uri, file_extension=None, queries=None):
 
 
 def put_data(uri, msg_body, file_extension, content_type):
-    print("in put_data : uri: ", uri, " file_extension: ",
+    print("in putt_data : uri: ", uri, " file_extension: ",
           file_extension, " Content-type: ", content_type)
     # uri = uri.strip('/')
     global put_file_count
     if os.path.isdir(uri):
-
+        print("is dir: {}".format(uri))
         put_file_count += 1
         file_name = "file_" + str(put_file_count) + \
             "." + dict_extensions[content_type]
@@ -140,14 +140,41 @@ def put_data(uri, msg_body, file_extension, content_type):
             return (201, file_path)
 
     elif os.path.isfile(uri):
+        print("is file: {}".format(uri))
         file_path = uri
-        file_obj = open(file=file_path, mode="w")
-        file_obj.write(msg_body)
-        file_obj.close()
-        return (200, file_path)
+        if file_extension in ["ico", "jpeg", "jpg", "pdf", "mp4"]:
+            file_obj = open(file=file_path, mode="wb")
+            file_obj.write(msg_body.encode('iso-8859-1'))
+            file_obj.close()
+            return (200, file_path)
+        else:
+            file_obj = open(file=file_path, mode="w")
+            file_obj.write(msg_body)
+            file_obj.close()
+            return (200, file_path)
+
     else:
         # print("else in put_daata")
-        return(404, uri)
+        try:
+            file_path = uri
+            if file_extension in ["ico", "jpeg", "jpg", "pdf", "mp4"]:
+                print("0")
+                file_obj = open(file=file_path, mode="wb")
+                print("1")
+                file_obj.write(msg_body.encode('iso-8859-1'))
+                print("file created")
+                file_obj.close()
+                print("2")
+                return (200, file_path)
+            else:
+                file_obj = open(file=file_path, mode="w")
+                file_obj.write(msg_body)
+                print("file created")
+                file_obj.close()
+                return (200, file_path)
+        except:
+            print("path does not exits")
+            return(404, uri)
     # if os.path.exists(uri):
     #     """
     #         File exits. Open it and put request_body as file contents

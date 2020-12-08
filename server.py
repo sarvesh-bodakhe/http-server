@@ -273,6 +273,7 @@ class Parser:
 
         if method == "PUT":
             uri = uri.strip('/')
+            print("uri: {}".format(uri))
             try:
                 file_extention = uri.split('.')[1]
             except:
@@ -399,6 +400,10 @@ class Parser:
                 self.res_headers['Last-Modified'], self.res_body = get_data(
                     file_path, file_extention, self.queries)
 
+                print("Last Modified Date: {}".format(
+                    self.res_headers['Last-Modified']))
+                print("IF modified since: {}".format(
+                    self.req_headers_general['If-Modified-Since']))
                 if self.res_headers['Last-Modified'] == self.req_headers_general['If-Modified-Since']:
                     # print("not modified image")
                     status_code = 304
@@ -433,7 +438,7 @@ class Parser:
                 ###
                 return response
 
-            elif file_extention in ["html", "json", "js"]:
+            elif file_extention in ["html", "json", "js", "txt"]:
                 # print("file extension is: " + str(file_extention))
 
                 self.res_headers['Last-Modified'], self.res_body = get_data(
@@ -544,23 +549,23 @@ class Parser:
 
         elif method == "PUT":
             file_path, file_extention, status_code = self.resolve_uri(URI)
-            print("Total Content length:{}".format(
-                self.req_headers_general['Content-Length']))
+            # print("Total Content length:{}".format(
+            # self.req_headers_general['Content-Length']))
             self.total_content_length = self.req_headers_general['Content-Length']
-            print("Current Content length: {}".format(
-                self.current_content_length))
+            # print("Current Content length: {}".format(
+            # self.current_content_length))
             self.cumulative_content_length += self.current_content_length
-            print("Cumulative Content length: {}".format(
-                self.cumulative_content_length))
+            # print("Cumulative Content length: {}".format(
+            # self.cumulative_content_length))
 
-            print("Total\tCurrent\tCumulative")
+            # print("Total\tCurrent\tCumulative")
             while(int(self.cumulative_content_length) < int(self.total_content_length)):
                 nextmsg = self.client_socket.recv(4096).decode("iso-8859-1")
                 nextmsg_body = nextmsg
                 self.current_content_length = len(nextmsg_body)
                 self.cumulative_content_length += self.current_content_length
-                print("{}\t{}\t{}".format(self.total_content_length,
-                                          self.current_content_length, self.cumulative_content_length))
+                # print("{}\t{}\t{}".format(self.total_content_length,
+                #   self.current_content_length, self.cumulative_content_length))
                 self.msg_body += nextmsg_body
 
             print("Calling manage_data.put_data")
@@ -694,9 +699,9 @@ class ClientThread(threading.Thread, Parser):
         """
             If msg is None... For now sendd 400
         # """
-        print("****************************  Request msg: Start  ********************")
-        print(msg)
-        print("*****************************   Request msg: end   ********************\n")
+        # print("****************************  Request msg: Start  ********************")
+        # print(msg)
+        # print("*****************************   Request msg: end   ********************\n")
 
         try:
             self.extract_msg(msg)
