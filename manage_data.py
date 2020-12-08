@@ -13,6 +13,8 @@ dict_extensions = {
     "image/png": "png",
     "image/jpeg": "jpeg",
     "image/jpg": "jpg",
+    "application/pdf": "pdf",
+    "video/mp4": "mp4"
 }
 
 
@@ -113,7 +115,8 @@ def delete_data(uri, file_extension=None, queries=None):
 
 
 def put_data(uri, msg_body, file_extension, content_type):
-    # print("in put_data : uri: ", uri, " file_extension: ",file_extension, " Content-type: ", content_type)
+    print("in put_data : uri: ", uri, " file_extension: ",
+          file_extension, " Content-type: ", content_type)
     # uri = uri.strip('/')
     global put_file_count
     if os.path.isdir(uri):
@@ -121,7 +124,7 @@ def put_data(uri, msg_body, file_extension, content_type):
         put_file_count += 1
         file_name = "file_" + str(put_file_count) + \
             "." + dict_extensions[content_type]
-        # print("file name create:{}".format(file_name))
+        print("file name create:{}".format(file_name))
         file_path = os.path.join(uri, file_name)
 
         if content_type in ['text/plain']:
@@ -285,7 +288,7 @@ def post_data(uri, msg_body, file_extension, content_type):
 
                 extenstion_of_file = info_dict['filename'].split('.')[1]
                 # if extenstion_of_file in ['jpeg', 'png', 'jpg']:
-                if info_dict['Content-Type'] in ["image/jpeg", "image/jpg"] or extenstion_of_file in ['jpeg', 'png', 'jpg']:
+                if info_dict['Content-Type'] in ["image/jpeg", "image/jpg"] or extenstion_of_file in ['jpeg', 'png', 'jpg', 'mp4', 'pdf']:
                     # print("image is of type jpg, jpeg, png - Binary")
 
                     if os.access(path=file_path, mode=os.F_OK):
@@ -372,13 +375,13 @@ def post_data(uri, msg_body, file_extension, content_type):
                 print("File Detected")
             try:
                 if not info_dict['filename']:
-                    print(info, value)
+                    # print(info, value)
                     temp_dict[info_dict['name']] = info_dict['value']
             except:
                 return 400
             # print()
 
-        # print("Object to append: ", temp_dict)
+        print("Object to append: ", temp_dict)
         json_obj = json.dumps(temp_dict)
         json_obj = json.loads(json_obj)
         json_obj['Year'] = int(json_obj['Year'])
@@ -390,7 +393,10 @@ def post_data(uri, msg_body, file_extension, content_type):
             # print("File exits")
             if os.access(path=uri, mode=os.R_OK):
                 fp = open(uri, "r")
-                obj = json.load(fp)
+                try:
+                    obj = json.load(fp)
+                except:
+                    obj = []
             else:
                 return 403
         else:
@@ -438,7 +444,7 @@ def get_modification_time(file_name):
 def get_data(file_path, file_extension=None, queries=None):
     # print("in get_data()-> file_path:", file_path, " file_extension:", file_extension, "queries:", queries)
 
-    if file_extension in ["ico", "jpeg", "jpg"]:
+    if file_extension in ["ico", "jpeg", "jpg", "pdf", "mp4"]:
         file_obj = open(file_path, 'rb')
         image_raw = file_obj.read()
         file_obj.close()

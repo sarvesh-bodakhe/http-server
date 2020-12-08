@@ -1,3 +1,4 @@
+import signal
 from socket import *
 import threading
 import sys
@@ -13,9 +14,11 @@ import mimetypes
 import base64
 from configparser import ConfigParser
 
-Server = None
-START = None
-PAUSE = None
+# Server = None
+# START = None
+# PAUSE = None
+
+SEREVR_STATE = "START"
 
 config = ConfigParser()
 config.read('config.ini')
@@ -57,8 +60,12 @@ CONTENT_TYPE = {
     "jpg": "image/jpeg",
     "json": "application/json; charset=utf-8;",
     "js": "text/javascript; charset=UTF-8",
+    "pdf": "application/pdf",
+    "mp4": "video/mp4",
     None: None
 }
+# "application/pdf": "pdf",
+# "video/mp4": "mp4"
 
 
 def print_linebreak():
@@ -73,6 +80,9 @@ class Parser:
         self.msg_body = None
         self.headers = None
         self.res_body = None
+        self.current_content_length = 0
+        self.cumulative_content_length = 0
+        self.total_content_length = 0
         self.queries = {}
         self.cookies = None
         self.req_headers_general = {
@@ -121,6 +131,7 @@ class Parser:
         self.headers = msg[0]
         if len(msg) >= 2:  # if len=2: request contains both headers and body
             self.msg_body = msg[1]
+            self.current_content_length = len(self.msg_body)
         return
 
     def extract_headers(self):
@@ -362,7 +373,8 @@ class Parser:
             file_path, file_extention, status_code = self.resolve_uri(URI)
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              STATUS_CODES[status_code])  # Status line
-
+            print("filepath: {} extension: {} Status Code: {}\n".format(
+                file_path, file_extention, status_code))
             self.res_headers['Status'] = status_code
             # if request is valid but status code != 200
             # i.e  404 Not Found, 403 Forbidden
@@ -382,7 +394,7 @@ class Parser:
                         response += "\r\n" + "Not 200 Not Okay\r\n"
                     return response.encode()
 
-            if file_extention in ["ico", "jpeg", "jpg"]:
+            if file_extention in ["ico", "jpeg", "jpg", "pdf", "mp4"]:
                 """ get_data() function returns tuple (last-modified date,file_data)"""
                 self.res_headers['Last-Modified'], self.res_body = get_data(
                     file_path, file_extention, self.queries)
@@ -453,7 +465,7 @@ class Parser:
                         response += "\r\n" + self.res_body
                 elif method == "HEAD":
                     response += "\r\n"
-                self.print_res_headers(response)
+                # self.print_res_headers(response)
                 response = response.encode()
                 # encode whole response(headers+body) as everything is textual
                 return response
@@ -469,8 +481,32 @@ class Parser:
 
         # method other than GET
         elif method == "POST":
+            # print(
+            #     "****************************  Request Headers: Start  ********************")
+            # print(self.headers['Content-Length'])
+            # print(self.req_headers_general['Content-Length'])
+            # print(
+            #     "************************   Request Headers: end   ********************\n")
             # print("in Create_response(): method: POST")
             file_path, file_extention, status_code = self.resolve_uri(URI)
+
+            print("Total Content length:{}".format(
+                self.req_headers_general['Content-Length']))
+            self.total_content_length = self.req_headers_general['Content-Length']
+            print("Current Content length: {}".format(
+                self.current_content_length))
+            self.cumulative_content_length += self.current_content_length
+            print("Cumulative Content length: {}".format(
+                self.cumulative_content_length))
+            while(int(self.cumulative_content_length) < int(self.total_content_length)):
+                nextmsg = self.client_socket.recv(4096).decode("iso-8859-1")
+                nextmsg_body = nextmsg
+                self.current_content_length = len(nextmsg_body)
+                self.cumulative_content_length += self.current_content_length
+                print("{}\t{}\t{}".format(self.total_content_length,
+                                          self.current_content_length, self.cumulative_content_length))
+                self.msg_body += nextmsg_body
+
             response = "{} {} {}\r\n".format(str(http_version), status_code,
                                              STATUS_CODES[status_code])  # Status line
             self.res_headers['Status'] = status_code
@@ -481,10 +517,10 @@ class Parser:
                 # self.print_res_headers(response)
                 return response.encode()
 
-            # print("calling post_data()")
+            print("calling post_data()")
             status_code = post_data(uri=file_path, msg_body=self.msg_body,
                                     file_extension=file_extention, content_type=self.req_headers_general["Content-Type"])
-            # print("out of post_data()")
+            print("out of post_data()")
 
             if status_code in [400, 403, 500]:
                 response = "{} {} {}\r\n".format(str(http_version), status_code,
@@ -508,10 +544,29 @@ class Parser:
 
         elif method == "PUT":
             file_path, file_extention, status_code = self.resolve_uri(URI)
-            # print("Calling manage_data.put_data")
+            print("Total Content length:{}".format(
+                self.req_headers_general['Content-Length']))
+            self.total_content_length = self.req_headers_general['Content-Length']
+            print("Current Content length: {}".format(
+                self.current_content_length))
+            self.cumulative_content_length += self.current_content_length
+            print("Cumulative Content length: {}".format(
+                self.cumulative_content_length))
+
+            print("Total\tCurrent\tCumulative")
+            while(int(self.cumulative_content_length) < int(self.total_content_length)):
+                nextmsg = self.client_socket.recv(4096).decode("iso-8859-1")
+                nextmsg_body = nextmsg
+                self.current_content_length = len(nextmsg_body)
+                self.cumulative_content_length += self.current_content_length
+                print("{}\t{}\t{}".format(self.total_content_length,
+                                          self.current_content_length, self.cumulative_content_length))
+                self.msg_body += nextmsg_body
+
+            print("Calling manage_data.put_data")
             status_code, resource_uri = manage_data.put_data(uri=file_path, msg_body=self.msg_body, file_extension=file_extention,
                                                              content_type=self.req_headers_general["Content-Type"])
-            # print("Out of manage_data.put_data")
+            print("Out of manage_data.put_data")
 
             if status_code in [400, 404]:
                 response = "{} {} {}\r\n".format(str(http_version), status_code,
@@ -609,6 +664,12 @@ class Server():
         self.server_socket.listen(1)
         print("server running on port " + str(self.port))
 
+    def stop_server(self):
+        self.server_socket.close()
+
+    def close_server(self):
+        self.server_socket.close()
+
 
 class ClientThread(threading.Thread, Parser):
     def __init__(self, ip, port, client_socket):
@@ -626,24 +687,35 @@ class ClientThread(threading.Thread, Parser):
         if max_thread_count < threading.activeCount():
             max_thread_count = threading.activeCount()
 
-        print("Active Threads:{} Current Client Thread:{} max_thread_count:{}\n".format(
-            threading.activeCount(), threading.currentThread(), max_thread_count))
+        # print("Active Threads:{} Current Client Thread:{} max_thread_count:{}\n".format(
+        #     threading.activeCount(), threading.currentThread(), max_thread_count))
         """ iso-8859-1 decoding to decode image(binary files without any issues) """
-        msg = self.client_socket.recv(4096000009).decode("iso-8859-1")
+        msg = self.client_socket.recv(4096).decode("iso-8859-1")
         """
             If msg is None... For now sendd 400
-        """
-        # print("****************************  Request msg: Start  ********************")
-        # print(msg)
-        # print("*****************************   Request msg: end   ********************\n")
-        self.extract_msg(msg)
+        # """
+        print("****************************  Request msg: Start  ********************")
+        print(msg)
+        print("*****************************   Request msg: end   ********************\n")
+
+        try:
+            self.extract_msg(msg)
+            self.extract_headers()
+        except:
+            self.client_socket.close()
+            request_line = None
+            log.error_log(status_code=500, size=len("Server Error"), request_line=request_line,
+                          client_ip=self.ip, user_agent=self.req_headers_general['User-Agent'], logDir=logDir)
+            return
+
         if self.res_headers['Status'] == 400:
             self.process_query()
             self.client_socket.close()
+            return
         # print("****************************  Request Headers: Start  ********************")
         # print(self.headers)
         # print("************************   Request Headers: end   ********************\n")
-        self.extract_headers()
+
         request_line = self.req_headers_general['method'] + " " + \
             self.req_headers_general['uri'] + " " + \
             self.req_headers_general['protocol']
@@ -656,6 +728,7 @@ class ClientThread(threading.Thread, Parser):
             self.client_socket.close()
             log.error_log(status_code=500, size=len("Server Error"), request_line=request_line,
                           client_ip=self.ip, user_agent=self.req_headers_general['User-Agent'], logDir=logDir)
+            return
         # print_linebreak()
 
     def process_query(self):
@@ -664,17 +737,58 @@ class ClientThread(threading.Thread, Parser):
         return
 
 
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    os.system(
+        command="kill $( ps aux | grep 'python3 server.py' | awk '{print $2}')")
+    print("Server Stopped")
+    sys.exit(0)
+
+
+def listen_for_interrupt():
+    while True:
+        signal.signal(signal.SIGINT, signal_handler)
+    signal.pause()
+
+
+def listen_for_input(server):
+    global SEREVR_STATE
+    while True:
+        inp = input()
+        if inp in ["STOP", "Stop", "stop"]:
+            print("Server Stopped")
+            server.close_server()
+            os.system(
+                command="kill $( ps aux | grep 'server.py' | awk '{print $2}')")
+        elif inp in ["Pause", "PAUSE", "pause"]:
+            SEREVR_STATE = "PAUSED"
+            print('Server Paused.. Enter "Restart" to start the server')
+        elif inp in ["restart", "Restart", "RESTART"]:
+            if SEREVR_STATE == "PAUSED":
+                print("Server Restarted")
+                SEREVR_STATE = "RUNNING"
+            else:
+                print("Invalid input")
+        else:
+            print("Invalid input")
+
+
 if __name__ == "__main__":
+    # global SEREVR_STATE
+
+    signal.signal(signal.SIGINT, signal_handler)
     port = PORT
     http_server = Server('', port)
     http_server.start_server()
+    threading.Thread(target=listen_for_input, args=(http_server,)).start()
     # print_linebreak()
-    print("Main Threads:{}\tCurrent Main Thread:{}\n".format(
-        threading.activeCount(), threading.currentThread()))
+    # print("Main Threads:{}\tCurrent Main Thread:{}\n".format(
+    # threading.activeCount(), threading.currentThread()))
     while True:
-        (client_socket, (ip, port)) = http_server.server_socket.accept()
-        newClientThread = ClientThread(ip, port, client_socket)
-        newClientThread.start()
+        if SEREVR_STATE != "PAUSED":
+            (client_socket, (ip, port)) = http_server.server_socket.accept()
+            newClientThread = ClientThread(ip, port, client_socket)
+            newClientThread.start()
 
     for t in threads:
         t.join()
